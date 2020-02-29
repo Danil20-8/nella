@@ -1,0 +1,11 @@
+.clickable:hover {
+    background-color: yellow;
+}
+
+.clicked {
+    background-color: aqua;
+}
+
+.clickable.clicked:hover {
+    background-color: green;
+}

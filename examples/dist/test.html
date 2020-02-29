@@ -1,0 +1,512 @@
+<html>
+
+<head>
+
+</head>
+
+<body>
+    <script>
+        function getElement(component) {
+            if (component) {
+                if (component instanceof HTMLElement) {
+                    return component;
+                }
+                else {
+                    if (Array.isArray(component.element)) {
+                        for (let i = 0; i < component.element.length; ++i) {
+                            let el = getElement(component.element[i]);
+
+                            if (el)
+                                return el;
+                        }
+                        return null;
+                    }
+                    else {
+                        return getElement(component.element);
+                    }
+                }
+            }
+            else {
+                return null;
+            }
+        }
+        function getParent(component) {
+            if (component) {
+                if (component instanceof HTMLElement) {
+                    return component;
+                }
+                else {
+                    if (Array.isArray(component.element)) {
+                        return getParent(component.__parent);
+                    }
+                    else {
+                        return getParent(component.element);
+                    }
+                }
+            }
+            else {
+                return null;
+            }
+        }
+        function getNextSibling(component, skip) {
+            if (component) {
+                if (!skip && component instanceof HTMLElement) {
+                    return component;
+                }
+                else {
+                    let s = skip ? component.__nextSibling : component;
+                    while (s) {
+                        let el = getElement(s);
+
+                        if (el)
+                            return el;
+
+                        s = s.__nextSibling;
+                    }
+                    if (Array.isArray(component.__parent.element)) {
+                        let r = getNextSibling(component.__parent.__nextSibling);
+                        return r;
+                    }
+                }
+            }
+            return null;
+        }
+        function append(el, ...children) {
+            children.forEach(c => {
+                if (c instanceof HTMLElement) {
+                    getParent(el).append(c);
+                }
+                else {
+                    if (Array.isArray(c.element)) {
+                        c.element.forEach(e => append(el, e));
+                    }
+                    else if (c.element) {
+                        append(el, c.element);
+                    }
+                }
+            });
+        }
+        function insertBefore(el, child, refchild) {
+            if (child instanceof HTMLElement) {
+                getParent(el).insertBefore(child, getNextSibling(refchild));
+            }
+            else {
+                if (Array.isArray(child.element)) {
+                    child.element.forEach(c => insertBefore(el, c, refchild));
+                }
+                else {
+                    insertBefore(el, child.element, refchild);
+                }
+            }
+        }
+         function val(value) {
+            return value instanceof Function ?
+                value() :
+                value;
+        }
+        function applyHtmlContext(el, context) {
+            Object.keys(context)
+                .forEach(k => {
+                    if (el[k] !== undefined) {
+                        let v = k.startsWith("on") ?
+                            context[k] :
+                            val(context[k]);
+                        if (el[k] !== v)
+                            el[k] = v;
+                    }
+                });
+        }
+        function element(name, context, ...children) {
+            let el = document.createElement(name);
+
+            applyHtmlContext(el, context);
+
+            append(el, ...children);
+
+            return el;
+        }
+        function update(component, state) {
+            if (component.update instanceof Function) {
+                component.update(state);
+            } else if (component.element && component.element.update instanceof Function) {
+                component.element.update(state);
+            }
+        }
+        function remove(component) {
+            if (component.remove instanceof Function) {
+                component.remove();
+            }
+            else if (component.element) {
+                remove(component.element);
+            }
+        }
+
+        class Component {
+            /*context;
+            element;
+            children;*/
+            constructor(html, context, children) {
+                if (html) {
+                    if (html instanceof HTMLElement || html instanceof Component) {
+                        this.element = html;
+                        append(this.element, ...children);
+                    }
+                    else
+                        this.element = element(html, context, ...children);
+                } else {
+                    this.element = children;
+                }
+                this.context = context;
+                this.children = children;
+
+                for (let i = 0; i < children.length; ++i) {
+                    let c = children[i];
+
+                    if (c instanceof Object && !(c instanceof HTMLElement)) {
+                        c.__parent = this;
+                        c.__nextSibling = children[i + 1];
+                    }
+                }
+            }
+
+            update() {
+                if (this.element instanceof HTMLElement)
+                    applyHtmlContext(this.element, this.context);
+                this.children.forEach(c => update(c));
+            }
+            remove() {
+                this.children.forEach(c => remove(c));
+
+                if (this.element instanceof HTMLElement)
+                    remove(this.element);
+            }
+        }
+         function component(name, context, ...children) {
+            return new Component(name, context, children);
+        }
+         function div(context, ...children) {
+            return component("div", context, ...children)
+        }
+         function span(context, ...children) {
+            return component("span", context, ...children);
+        }
+         function input(context, type) {
+            return component("input", Object.assign(context, { type: type }));
+        }
+         function inputText(context) {
+            return input(context, "text");
+        }
+         function inputSubmit(context) {
+            return input(context, "submit");
+        }
+         function checkbox(context) {
+            return input(context, "checkbox");
+        }
+         function radio(context) {
+            return input(context, "radio");
+        }
+         function label(context, ...children) {
+            return component("label", context, ...children);
+        }
+         function a(context, ...children) {
+            return component("a", context, ...children);
+        }
+
+         function p(context, ...children) {
+            return component("p", context, ...children);
+        }
+         function button(context) {
+            return component("button", context);
+        }
+         function select(context) {
+            let options = context.options;
+            delete context.options;
+            return component("select", context,
+                listComponent({
+                    data: options,
+                    createElement: (data) => component("option", {
+                        innerText: data,
+                        selected: () => data === val(context.value),
+                        setState: function (s) {
+                            this.innerText = s;
+                        }
+                    })
+                })
+            );
+        }
+         function body(...children) {
+            return component(null, {}, ...children);
+        }
+         function iframe(context, ...children) {
+            let e = component("iframe", context);
+            let componentUpdate = e.update.bind(e.update);
+            let el = getElement(e);
+            let it = setInterval(() => {
+                if (el.contentDocument) {
+                    clearInterval(it);
+                    let fel = component(el.contentDocument.body, context, ...children);
+                    e.update = () => {
+                        //componentUpdate();
+
+                        fel.update();
+                    }
+                }
+            }, 30);
+            return e;
+        }
+         function switchComponent(context, limit = 1) {
+            return listComponent({
+                data: () => val(context.items).filter(i => val(i.active)).slice(0, limit),
+                createElement: (i) => i.createElement()
+            });
+        }
+
+        let __listComponentKeyIncrement = 0;
+        class ListComponent {
+            /*context;
+            element;*/
+            constructor(context, element) {
+                this.context = context;
+                this.element = element;
+
+                this.oldData = [];
+                this.elements = [];
+                this.element = this.elements;
+                this.dict = {};
+            }
+
+            /*elements;
+            oldData;
+            dict;*/
+
+            update() {
+                let data = val(this.context.data);
+
+                let replaced = {};
+                let inserted = {};
+
+                for (let i = 0; i < data.length; ++i) {
+                    let nd = data[i];
+                    let od = this.oldData[i];
+
+                    let doObj = nd instanceof Object;
+
+                    if (doObj && nd == od)
+                        continue;
+
+                    let key = doObj ?
+                        nd["__key"] || (nd["__key"] = ++__listComponentKeyIncrement) :
+                        nd;
+
+                    let element = this.dict[key];
+
+                    if (!element) {
+                        element = this.context.createElement(nd);
+                        element.__parent = this;
+
+                        if (doObj) {
+                            this.dict[key] = element;
+                        }
+                        else {
+                            let d = this.dict[key];
+                            if (d) {
+                                d.push(element);
+                            }
+                            else {
+                                this.dict[key] = [element];
+                            }
+
+                            let it = inserted[key];
+                            if (it)
+                                it.push(element);
+                            else
+                                inserted[key] = [element];
+                        }
+                    }
+                    else {
+                        if (!doObj) {
+                            let it = inserted[key];
+                            if (it && it.length >= element.length) {
+                                let el = this.context.createElement(nd);
+                                element.__parent = this;
+
+                                element.push(el);
+                                element = el;
+
+                                let it = inserted[key];
+                                if (it)
+                                    it.push(element);
+                                else
+                                    inserted[key] = [element];
+                            } else {
+                                let e = element.shift();
+                                element.push(e);
+                                element = e;
+
+                                let it = inserted[key];
+                                if (it)
+                                    it.push(element);
+                                else
+                                    inserted[key] = [element];
+
+                                if (nd == od)
+                                    continue;
+                            }
+                        }
+
+                        let t = replaced[key];
+                        if (t) {
+                            if (!doObj) {
+                                t.splice(t.indexOf(element), 1);
+                            }
+                            else {
+                                delete replaced[key];
+                            }
+                        }
+
+                        if (doObj) {
+                            inserted[key] = element;
+                        }
+                    }
+
+                    let oldElement = this.elements[i];
+
+                    let insertIndex = i + 1;
+                    for (; insertIndex < this.elements.length; ++insertIndex) {
+                        let nthd = this.oldData[insertIndex];
+
+                        if (doObj) {
+                            if (inserted[nthd["__key"]])
+                                continue;
+                            else
+                                break;
+                        }
+                        else {
+                            let it = inserted[nthd];
+                            if (it) {
+                                let nthel = this.elements[insertIndex];
+                                if (it.indexOf(nthel) > -1)
+                                    continue;
+                            }
+                            break;
+                        }
+                    }
+
+                    //insertBefore(this.__parent, element, this.elements[insertIndex]);
+
+                    if (insertIndex < this.elements.length) {
+                        insertBefore(this.__parent, element, this.elements[insertIndex]);
+                    }
+                    else {
+                        //console.log(insertIndex, nd, this, getNextSibling(this, true));
+                        insertBefore(this.__parent, element, getNextSibling(this, true));
+                    }
+
+                    if (oldElement) {
+                        if (doObj) {
+                            if (!inserted[od["__key"]])
+                                replaced[od["__key"]] = oldElement;
+                        }
+                        else {
+                            let it = inserted[od];
+                            if (!it || it.indexOf(oldElement) < 0) {
+                                let t = replaced[od];
+                                if (t)
+                                    t.push(oldElement);
+                                else
+                                    replaced[od] = [oldElement];
+                            }
+                        }
+                    }
+
+                    this.elements[i] = element;
+                    this.oldData[i] = nd;
+                }
+
+                Object.keys(replaced)
+                    .forEach(k => {
+                        let t = replaced[k];
+                        let d = this.dict[k];
+                        if (Array.isArray(t)) {
+                            t.forEach(e => {
+                                remove(e);
+                                d.splice(d.indexOf(element), 1);
+                            }
+                            );
+
+                            if (d.length === 0) {
+                                delete this.dict[k];
+                            }
+                        }
+                        else {
+                            remove(t);
+
+                            delete this.dict[k];
+                        }
+                    });
+
+                if (this.oldData.length > data.length) {
+                    for (let i = data.length; i < this.oldData.length; ++i) {
+                        let el = this.elements[i];
+                        let od = this.oldData[i];
+
+                        let doObj = od instanceof Object
+                        let k = doObj ?
+                            od["__key"] :
+                            od;
+
+                        if (doObj && inserted[od["__key"]])
+                            continue;
+                        else {
+                            let it = inserted[od];
+                            if (it && it.indexOf(el) > -1) {
+                                continue;
+                            }
+                        }
+
+
+                        if (doObj) {
+                            delete this.dict[k];
+                        }
+                        else {
+                            let d = this.dict[k];
+                            d.splice(d.indexOf(el), 1);
+                            if (d.length === 0) {
+                                delete this.dict[k];
+                            }
+                        }
+                        remove(el);
+                    }
+                    this.elements.splice(data.length, this.elements.length);
+                    this.oldData.splice(data.length, this.oldData.length);
+                }
+                this.elements.forEach(e => update(e));
+            }
+
+            remove() {
+                if (this.elements)
+                    this.elements.forEach(e => remove(e));
+            }
+        }
+        function listComponent(context, element) {
+            return new ListComponent(context, element);
+        }
+         function list(context) {
+            return new ListComponent(context);
+        }
+    </script>
+    <script>
+
+let context = {
+            
+        };
+
+        let app = component(document.body, {},
+            button({"innerText":"[object Object]"}, ),button({"innerText":"[object Object]"}, ),button({"innerText":"[object Object]"}, ),button({"innerText":"[object Object]"}, ),button({"innerText":"[object Object]"}, ),button({"innerText":"[object Object]"}, ),button({"innerText":"[object Object]"}, )
+            );
+
+        app.update();
+    </script>
+</body>
+
+</html>

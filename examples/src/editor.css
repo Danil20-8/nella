@@ -1,0 +1,49 @@
+.editor{
+    position: fixed;
+    height: 100%;
+    width: 100%;
+}
+
+.editor-out{
+    position: absolute;
+    left: 80vw;
+    right: 0;
+    top: 0;
+    bottom: 80vh;
+
+    display: flex;
+    flex-flow: row-reverse;
+    background-color: yellow;
+}
+.editor-top{
+    position: absolute;
+    left: 0;
+    right: 20vw;
+    top: 0;
+    bottom: 80vh;
+
+    display: flex;
+
+    background-color: green;
+}
+.editor-side{
+    position: absolute;
+    left: 80vw;
+    right: 0;
+    top: 20vh;
+    bottom: 0;
+    background-color: yellow;
+    overflow-y: auto;
+}
+.editor-sandbox{
+    position: absolute;
+    left: 0;
+    right: 20vw;
+    top: 20vh;
+    bottom: 0;
+    background-color: lightgray;
+}
+
+.item-active{
+    box-shadow: 0 0 7px yellow;
+}
