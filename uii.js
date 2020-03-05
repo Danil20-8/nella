@@ -574,7 +574,7 @@ class ListComponent extends Component {
                     if (it && it.length >= element.length) {
                         let el = new Component(null, {}, this.context.component(nd));
                         element.__parent = this;
-                        newElements.push(element);
+                        newElements.push(el);
 
                         element.push(el);
                         element = el;
