@@ -233,11 +233,6 @@ export class Component {
     }
     __reset() {
         this.children.forEach(c => c.__reset());
-        if (Array.isArray(this.element)) {
-            this.element.forEach(e => e.__reset());
-        }
-        if (this.element instanceof Component)
-            this.element.__reset();
 
         this.__started = false;
 
@@ -249,6 +244,8 @@ export class Component {
 
     }
     __start() {
+        this.children.forEach(c => c.__start());
+
         this.__started = true;
 
         return this.start();
@@ -257,33 +254,15 @@ export class Component {
     }
     __stop() {
         this.children.forEach(c => c.__stop());
-        if (Array.isArray(this.element)) {
-            this.element.forEach(e => e.__stop());
-        }
 
         this.stop();
         this.__started = false;
+
         if (this.element instanceof HTMLElement) {
             this.__store.untrack();
         }
     }
     stop() {
-    }
-    async update() {
-        if (!this.__started) {
-            await this.__start();
-        }
-        try {
-            this.__applyHtmlContext();
-
-            this.children.forEach(c => update(c));
-        }
-        catch (e) {
-            if (!e.componentStack)
-                e.componentStack = [];
-            e.componentStack.push(this);
-            throw e;
-        }
     }
     __applyHtmlContext() {
         if (this.element instanceof HTMLElement) {
@@ -316,8 +295,13 @@ class PoolProxy {
             case "toString":
                 return _[prop];
         }
-        
+
         return this.valueContainer.value[prop];
+    }
+
+    set(_, prop, value) {
+        this.valueContainer.value[prop] = value;
+        return true;
     }
 }
 class ComponentPool {
@@ -385,19 +369,15 @@ export function input(context, type) {
     return component("input", Object.assign(context, { type: type }));
 }
 export function inputText(context) {
-    setHooks(context);
     return input(context, "text");
 }
 export function inputSubmit(context) {
-    setHooks(context);
     return input(context, "submit");
 }
 export function checkbox(context) {
-    setHooks(context);
     return input(context, "checkbox");
 }
 export function radio(context) {
-    setHooks(context);
     return input(context, "radio");
 }
 export function label(context, ...children) {
@@ -475,7 +455,7 @@ export function iframe(context, ...children) {
 }
 export function mount(element, ...children) {
     let c = new Component(element, {}, children);
-    c.update();
+    c.__start();
     return c;
 }
 /**
@@ -527,10 +507,12 @@ class ListComponent extends Component {
 
         this.__store = new Target(store,
             [
-                () => this.__updateList(
-                    context.data.valueOf() instanceof Function ?
-                        context.data().valueOf() :
-                        context.data.valueOf())
+                {
+                    track: () => context.data.valueOf() instanceof Function ?
+                        context.data() :
+                        context.data,
+                    action: (data) => this.__updateList(data)
+                }
             ]);
 
         this.__store.track();
@@ -545,33 +527,32 @@ class ListComponent extends Component {
             }
         }
     }
-    update() {
-        this.__store.track();
 
-        super.update();
-    }
     __updateList(data) {
         let replaced = {};
         let inserted = {};
-
+        let newElements = [];
         for (let i = 0; i < data.length; ++i) {
             let nd = data[i];
+            let ndValue = nd.valueOf();
             let od = this.oldData[i];
 
-            let doObj = nd instanceof Object;
+            let doObj = ndValue instanceof Object;
+            if (!doObj)
+                nd = ndValue;
 
-            if (doObj && nd == od)
+            if (doObj && ndValue === od)
                 continue;
-
             let key = doObj ?
-                nd["__key"] || (nd["__key"] = ++__listComponentKeyIncrement) :
+                (ndValue["__key"]) || (ndValue["__key"] = ++__listComponentKeyIncrement) :
                 nd;
 
             let element = this.dict[key];
 
             if (!element) {
-                element = new Component(null, nd, this.context.component(nd));
+                element = new Component(null, {}, this.context.component(nd));
                 element.__parent = this;
+                newElements.push(element);
 
                 if (doObj) {
                     this.dict[key] = element;
@@ -596,8 +577,9 @@ class ListComponent extends Component {
                 if (!doObj) {
                     let it = inserted[key];
                     if (it && it.length >= element.length) {
-                        let el = new Component(null, nd, this.context.component(nd));
+                        let el = new Component(null, {}, this.context.component(nd));
                         element.__parent = this;
+                        newElements.push(element);
 
                         element.push(el);
                         element = el;
@@ -618,7 +600,7 @@ class ListComponent extends Component {
                         else
                             inserted[key] = [element];
 
-                        if (nd == od)
+                        if (ndValue === od)
                             continue;
                     }
                 }
@@ -669,7 +651,7 @@ class ListComponent extends Component {
             }
             else {
                 //console.log(insertIndex, nd, this, getNextSibling(this, true));
-
+    
                 insertBefore(this.__parent, element, getNextSibling(this, true));
             }*/
 
@@ -693,7 +675,7 @@ class ListComponent extends Component {
                 }
             }
             this.elements[i] = element;
-            this.oldData[i] = nd;
+            this.oldData[i] = ndValue;
         }
 
         Object.keys(replaced)
@@ -755,7 +737,10 @@ class ListComponent extends Component {
 
             if (this.elements.length > 0)
                 this.elements[this.elements.length - 1].__nextSibling = null;
+
         }
+
+        newElements.forEach(e => e.__start());
     }
 }
 /**
@@ -795,7 +780,7 @@ export class UiiTarget extends Target {
     }
 }
 
-export function useStore(data){
+export function useStore(data) {
     return new Property(store, data).__proxy;
 }
 

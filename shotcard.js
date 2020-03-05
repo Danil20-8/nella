@@ -15,20 +15,125 @@ function handleResult(r, callback) {
  */
 function getProxyFunction(property) {
     switch (property.__propName) {
-        case "splice":
         case "shift":
         case "pop":
-        case "push":
         case "unshift":
-        case "sort":
             return function (...args) {
-                return handleResult(
-                    property.__sourceContainer.source[property.__propName](...args.map(a => a.valueOf())),
-                    () => {
-                        property.__sourceProperty.__reload();
-                        Object.values(property.__sourceProperty.__properties).forEach(p => p.__reload());
+                let r = property.__sourceContainer.source[property.__propName](...args.map(a => a.valueOf()));
+                property.__sourceProperty.__reloadArray();
+                return r;
+
+            }
+        case "push":
+            return function (...items) {
+                property.__sourceContainer.source.push(...items);
+                for (let i = property.__sourceContainer.source.length - items.length; i < property.__sourceContainer.source.length; ++i) {
+                    let p = property.__sourceProperty[i];
+                    if (!p) {
+                        p = new Property(property.__store, property.__sourceContainer.source, i, property.__sourceProperty);
+                        property.__sourceProperty.__properties[i] = p;
+                    } else {
+                        p.__setValue(property.__sourceContainer.source[i]);
                     }
-                );
+                }
+                property.__sourceProperty.__reloadArray();
+                return property.__sourceContainer.source.length;
+            }
+        case "splice":
+            return function (start, deleteCount, ...items) {
+                property.__sourceContainer.source.splice(start, deleteCount, ...(items.map(i => i.valueOf())));
+                let values = property.__sourceContainer.source;
+
+                let replaceBound = start + Math.min(deleteCount, items.length);
+                let target = property.__sourceProperty;
+                let targetContainer = target.__sourceContainer.source[target.__propName];
+                for (let i = start; i < replaceBound; ++i) {
+                    target.__properties[i].__setValue(values[i]);
+                }
+                if (deleteCount < items.length) {
+                    let lowerBound = start + items.length - deleteCount;
+                    let upperBound = lowerBound;
+                    for (; ; ++upperBound) {
+                        let p = target.__properties[upperBound];
+                        if (!p) {
+                            break;
+                        }
+                    }
+                    for (let i = upperBound - 1; i >= lowerBound; --i) {
+                        let p = target.__properties[i];
+                        p.__propName = i + items.length - deleteCount;
+                        target.__properties[p.__propName] = p;
+                    }
+                    for (let i = replaceBound; i <= lowerBound; ++i) {
+                        target.__properties[i] = new Property(target.__store, target.__sourceContainer.source, i, target);
+                    }
+
+                    target.__reloadArray();
+                }
+                else if (deleteCount > items.length) {
+                    let lowerBound = start + deleteCount - items.length;
+                    let upperBound = lowerBound;
+                    for (; ; ++upperBound) {
+                        let p = target.__properties[upperBound];
+                        if (!p) {
+                            break;
+                        }
+                    }
+
+                    if (lowerBound - deleteCount < targetContainer.length) {
+                        let removed = [];
+                        for (let i = replaceBound; i < lowerBound; ++i) {
+                            removed.push(target.__properties[i]);
+                        }
+                        for (let i = lowerBound; i < upperBound; ++i) {
+                            let p = target.__properties[i];
+                            p.__propName = i + items.length - deleteCount;
+                            target.__properties[p.__propName] = p;
+                        }
+                        for (let i = 0; i < removed.length; ++i) {
+                            let p = removed[i];
+                            p.__propName = upperBound + start - replaceBound + i;
+                            target.__properties[p.__propName] = p;
+                        }
+                    }
+                    target.__reloadArray();
+                }
+            }
+        case "sort":
+            return function ([compareFunction]) {
+                Object.values(property.__sourceProperty)
+                    .filter(p => Number.isInteger(p.__propName))
+                    .map(p => {
+                        return {
+                            prop: p,
+                            value: p.__proxy.valueOf()
+                        }
+                    }).sort(function (l, r) {
+                        if (compareFunction) {
+                            return compareFunction(l.value, r.value);
+                        } else {
+                            if (l.value > r.value) {
+                                return 1;
+                            }
+                            if (l.value < r.value) {
+                                return -1;
+                            }
+                            return 0;
+                        }
+                    }).forEach((p, index) => {
+                        let oldProp = property.__sourceProperty.__properties[index];
+                        if (p.prop !== oldProp) {
+                            oldProp.__propName = p.prop.__propName;
+                            p.prop.__propName = index;
+                            p.__sourceProperty.__properties[index] = p.prop;
+                            p.__sourceProperty.__properties[oldProp.__propName] = oldProp;
+                            p.__sourceProperty.__sourceContainer.source[oldProp.__propName] = p.__sourceProperty.__sourceContainer.source[index];
+                            p.__sourceProperty.__sourceContainer.source[index] = p.value;
+                        }
+                    });
+
+                property.__sourceProperty.__reload();
+                return property.__sourceProperty.__proxy;
             }
         case "slice":
             return function (begin, end) {
@@ -49,6 +154,7 @@ function getProxyFunction(property) {
                 return property.__sourceContainer.source[property.__propName](
                     (_, i, arr) => {
                         let e = property.__sourceProperty.__proxy[i];
+                        let r = action(e, i, arr);
                         return action(e, i, arr);
                     }
                 )
@@ -146,7 +252,7 @@ export class Property {
      * 
      * @param {Store} store 
      * @param {*} sourceStore 
-     * @param {string} propName 
+     * @param {string|number} propName 
      * @param {Property | undefined} sourceProperty
      */
     constructor(store, sourceStore, propName, sourceProperty) {
@@ -155,6 +261,7 @@ export class Property {
         this.__sourceProperty = sourceProperty;
 
         this.__properties = {};
+        if (propName === "0") throw new Error("!!!!");
         this.__propName = propName;
         this.__targets = [];
         this.__loaded = false;
@@ -166,7 +273,14 @@ export class Property {
         target.properties.push(this);
         this.__targets.push(action);
     }
-
+    __reloadArray() {
+        this.__reload();
+        Object.values(this.__properties)
+            .forEach(p => {
+                if (!Number.isInteger(p.__propName))
+                    p.__reload();
+            });
+    }
     __reload() {
         if (!this.__loaded) {
             this.__store.__load(this);
@@ -210,7 +324,7 @@ class PropertyProxyHandler {
     /**
      * 
      * @param {Property} target 
-     * @param {string} prop 
+     * @param {string|number} prop 
      */
     get(_, prop) {
         try {
@@ -224,6 +338,9 @@ class PropertyProxyHandler {
                     this.__target.__sourceContainer.source[this.__target.__propName] :
                     this.__target.__sourceContainer.source;
 
+                if (!isNaN(prop)) {
+                    prop = Number.parseInt(prop);
+                }
                 this.__target.__properties[prop] = property = new Property(this.__target.__store, propStore, prop, this.__target);
             }
             else if (property instanceof Function) {
@@ -279,18 +396,34 @@ class PropertyProxyHandler {
 }
 const propertyProxyHandler = new PropertyProxyHandler();
 
+class TargetAction{
+    constructor(preaction, postaction, continious) {
+        
+    }
+}
 export class Target {
     /**
      * 
      * @param {Store} store
-     * @param {(() => void)[]} actions 
+     * @param {((() => void))[]} actions 
      */
     constructor(store, actions) {
         this.store = store;
         this.actions = actions.map(a => {
             return {
                 tracked: false,
-                action: a
+                action: a instanceof Function ?
+                    {
+                        track: a,
+                        action: null
+                    } :
+                    {
+                        track: a.track.valueOf() instanceof Function ?
+                            a.track :
+                            () => a.track.valueOf(),
+                        action: a.action
+                    }
+
             };
         });
         this.properties = [];
@@ -302,7 +435,9 @@ export class Target {
                 this.store.track(this, a.action);
                 a.tracked = true;
             } else {
-                a.action();
+                let r = a.action.track();
+                if (a.action.action)
+                    a.action.action(r);
             }
         });
     }
@@ -339,8 +474,10 @@ export class Store {
         }
         let t = { target, action };
         this.__startTrack(t);
-        action();
+        let r = action.track();
         this.__stopTrack(t);
+        if (action.action)
+            action.action(r);
     }
     shot() {
         let start = Date.now();
@@ -349,7 +486,9 @@ export class Store {
             this.__loaded.forEach(p => {
                 p.__targets.forEach(t => {
                     if (!shoted[t.__storeKey]) {
-                        t();
+                        let r = t.track();
+                        if (t.action)
+                            t.action(r);
                         shoted[t.__storeKey] = true;
                     }
                 });

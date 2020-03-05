@@ -1,6 +1,7 @@
-import { div, mount, switchComponent, inputText, button, list, poolList, useStore, poolSwitch } from "../../uii";
+import { div, mount, switchComponent, inputText, button, list, poolList, useStore, poolSwitch, label, p, UiiTarget } from "../../uii";
 import { pushState, useFallbackBackHandler, restore } from "../../router";
 import { popup } from "./withUii/popup";
+import { expirienceComponent } from "./withUii/expirienceComponent";
 
 // Experimental default history popstate handler
 useFallbackBackHandler(() => {
@@ -11,8 +12,12 @@ useFallbackBackHandler(() => {
 // useStore returns proxy of your source object
 let store = useStore({
     name: "rename me",
-    langs: ["en", "ru"]
+    langs: ["en", "ru"],
+    expirience: [{ name: "cook", age: "3 years" }, { name: "pilot", "age": "1 year" }]
 });
+new UiiTarget([
+    //() => console.log(store.expirience.map(e => `${e.name} ${e.age}`).join(", "))
+]).track();
 let popupStore = useStore({
     queue: [],
 
@@ -32,6 +37,9 @@ let route = useStore({
     },
     gotoContent: function () {
         this.goto("/content");
+    },
+    gotoResume: function () {
+        this.goto("/resume");
     },
     goto: function (pathname) {
         this.pathname = pathname;
@@ -136,7 +144,9 @@ mount(document.body,
                     [
                         div({ innerText: "Home" }),
                         div({ innerText: "Hello everybody! Glad to see you at my home! Please go to see my content!" }),
-                        button({ innerText: "to content!", onclick: route.gotoContent })
+                        button({ innerText: "to content!", onclick: route.gotoContent }),
+                        div({ innerText: "Or see my resume" }),
+                        button({ innerText: "to resume!", onclick: route.gotoResume })
                     ]
             },
             {
@@ -149,7 +159,51 @@ mount(document.body,
                         button({ innerText: "to home", onclick: route.gotoHome })
                     ]
 
+            },
+            {
+                active: () => route.pathname.startsWith("/resume"),
+                component: () =>
+                    [
+                        div({ innerText: store.name }),
+                        div({},
+                            label({ innerText: "languages" }),
+                            div({},
+                                inputTextForm({ caption: "language", onsave: (value) => store.langs.push(value) })
+                            ),
+                            poolList({
+                                data: store.langs,
+                                component: (data) => div({ innerText: data })
+                            })
+                        ),
+                        expirienceComponent(store.expirience)
+                    ]
             }
         )
     )
 );
+
+function log(component) {
+    console.log(component);
+    return component;
+}
+
+function inputTextForm({ caption, onsave }) {
+    let state = useStore({
+        value: ""
+    });
+
+    return [
+        inputText({
+            placeholder: caption,
+            value: state.value,
+            onchange: (e) => state.value = e.target.value
+        }),
+        button({
+            innerText: "save",
+            onclick: () => {
+                onsave(state.value);
+                state.value = "";
+            }
+        })
+    ];
+}

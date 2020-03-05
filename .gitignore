@@ -1,6 +1,6 @@
-/dist
-/tmp
-/out-tsc
+dist/
+tmp/
+out-tsc/
 
 # Runtime data
 pids
