@@ -151,7 +151,7 @@ export class Component {
      */
     constructor(html, context, children) {
         this.context = context;
-        this.awake();
+        this.awake(this.context);
 
         this.children = children || this.component(context);
         if (!Array.isArray(this.children)) {
@@ -232,13 +232,12 @@ export class Component {
         return [];
     }
     __reset() {
-        this.children.forEach(c => c.__reset());
-
         this.__started = false;
 
-        this.awake();
-
+        this.awake(this.context);
         this.__applyHtmlContext();
+
+        this.children.forEach(c => c.__reset());
     }
     awake() {
 
@@ -326,21 +325,16 @@ class ComponentPool {
     pop(context) {
         let element = this.__pool.pop();
         if (element) {
-            element.__pool.valueContainer.value = context;
+            element.__pool.context = context;
             element.__reset();
             return element;
         }
         else {
-            let valueContainer = {
-                value: context
-            };
+            let pool = useStore({
+                context
+            });
 
-            let pool = {
-                valueContainer,
-                proxy: new PoolProxy(valueContainer)
-            };
-
-            element = new Component(null, pool, this.__component(pool.proxy));
+            element = new Component(null, pool, this.__component(pool.context));
             element.__pool = pool;
             element.__remove = element.remove;
             element.remove = () => {

@@ -16,7 +16,14 @@ let store = useStore({
     expirience: [{ name: "cook", age: "3 years" }, { name: "pilot", "age": "1 year" }]
 });
 new UiiTarget([
-    //() => console.log(store.expirience.map(e => `${e.name} ${e.age}`).join(", "))
+    // Debug main state logging
+    /*{
+        tracking: () => console.log(store.expirience.map(e => `${e.name} ${e.age}`).join(", ")),
+        // continuousTracking is useful for dynamic objects such as arrays
+        // it allows you do track changes of new item properties
+        continuousTracking: true
+    }*/
+
 ]).track();
 let popupStore = useStore({
     queue: [],
@@ -108,7 +115,7 @@ mount(document.body,
                 button({
                     innerText: "Add",
                     onclick: () => {
-                        store.langs.push(inputStore.value);
+                        store.langs.push(inputStore.value.valueOf());
                         inputStore.value = "";
                     }
                 })
@@ -201,7 +208,7 @@ function inputTextForm({ caption, onsave }) {
         button({
             innerText: "save",
             onclick: () => {
-                onsave(state.value);
+                onsave(state.value.valueOf());
                 state.value = "";
             }
         })

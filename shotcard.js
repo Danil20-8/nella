@@ -26,14 +26,16 @@ function getProxyFunction(property) {
             }
         case "push":
             return function (...items) {
-                property.__sourceContainer.source.push(...items);
-                for (let i = property.__sourceContainer.source.length - items.length; i < property.__sourceContainer.source.length; ++i) {
-                    let p = property.__sourceProperty[i];
+                let source = property.__sourceContainer.source;
+                source.push(...items);
+                let sourceProperty = property.__sourceProperty;
+                for (let i = source.length - items.length; i < source.length; ++i) {
+                    let p = sourceProperty.__properties[i];
                     if (!p) {
-                        p = new Property(property.__store, property.__sourceContainer.source, i, property.__sourceProperty);
-                        property.__sourceProperty.__properties[i] = p;
+                        p = new Property(property.__store, source, i, sourceProperty);
+                        sourceProperty.__properties[i] = p;
                     } else {
-                        p.__setValue(property.__sourceContainer.source[i]);
+                        p.__setValue(source[i]);
                     }
                 }
                 property.__sourceProperty.__reloadArray();
@@ -92,7 +94,7 @@ function getProxyFunction(property) {
                         }
                         for (let i = 0; i < removed.length; ++i) {
                             let p = removed[i];
-                            p.__propName = upperBound + start - replaceBound + i;
+                            p.__propName = upperBound - 1 + start - replaceBound + i;
                             target.__properties[p.__propName] = p;
                         }
                     }
@@ -379,12 +381,12 @@ class PropertyProxyHandler {
         let property = this.__target.__properties[prop];
 
         if (property !== undefined) {
-            property.__setValue(value.valueOf());
+            property.__setValue(value/* && value.valueOf()*/);
         } else {
             (this.__target.__propName ?
                 this.__target.__sourceContainer.source[this.__target.__propName] :
                 this.__target.__sourceContainer.source)
-            [prop] = value.valueOf();
+            [prop] = value/* && value.valueOf()*/;
         }
 
         if (Array.isArray(this.__target.__sourceContainer.source[this.__target.__propName]))
@@ -437,7 +439,7 @@ class TargetAction {
         let r = this.tracking.valueOf() instanceof Function ?
             this.tracking() :
             this.tracking;
-        r.valueOf();
+        r && r.valueOf();
         this.target.store.__stopTrack(this);
         if (this.postaction)
             this.postaction(r);
@@ -446,6 +448,7 @@ class TargetAction {
     untrack() {
         this.properties.forEach(p => p.__removeTarget(this));
         this.properties.length = 0;
+        this.tracked = false;
     }
 }
 export class Target {
