@@ -263,15 +263,17 @@ export class Property {
         this.__properties = {};
         if (propName === "0") throw new Error("!!!!");
         this.__propName = propName;
+        /**@type {TargetAction[]} */
         this.__targets = [];
         this.__loaded = false;
 
         this.__proxy = new PropertySource(this);
     }
 
-    __addTarget({ target, action }) {
-        target.properties.push(this);
-        this.__targets.push(action);
+    /**@param {TargetAction} targetAction*/
+    __addTarget(targetAction) {
+        targetAction.properties.push(this);
+        this.__targets.push(targetAction);
     }
     __reloadArray() {
         this.__reload();
@@ -290,9 +292,9 @@ export class Property {
     __shot() {
         this.__loaded = false;
     }
-
-    __removeTarget(action) {
-        this.__targets.splice(this.__targets.indexOf(action), 1);
+    /**@param {TargetAction} targetAction*/
+    __removeTarget(targetAction) {
+        this.__targets.splice(this.__targets.indexOf(targetAction), 1);
     }
 
     __setStore(store) {
@@ -332,6 +334,7 @@ class PropertyProxyHandler {
                 return this.__target.__sourceContainer.source[this.__target.__propName][prop];
             }
 
+            /**@type{Property} */
             let property = this.__target.__properties[prop];
             if (property === undefined) {
                 let propStore = this.__target.__propName !== undefined ?
@@ -396,72 +399,106 @@ class PropertyProxyHandler {
 }
 const propertyProxyHandler = new PropertyProxyHandler();
 
-class TargetAction{
-    constructor(preaction, postaction, continious) {
-        
+class TargetAction {
+    /**
+     * 
+     * @param {Target} target 
+     * @param {(() => any) | Proxy} tracking 
+     * @param {(any) => any} postaction 
+     * @param {boolean} continuousTracking 
+     */
+    constructor(target, tracking, postaction, continuousTracking) {
+        this.target = target;
+        this.tracking = tracking;
+        this.postaction = postaction;
+        this.continuousTraking = continuousTracking;
+        this.tracked = false;
+        /**@type {Property[]} */
+        this.properties = [];
+    }
+
+    shot() {
+        if (!this.tracked) {
+            this.__track();
+        }
+        else if (this.continuousTraking) {
+            this.untrack();
+            this.__track();
+        } else {
+            let r = this.tracking.valueOf() instanceof Function ?
+                this.tracking() :
+                this.tracking;
+            if (this.postaction)
+                this.postaction(r);
+        }
+    }
+    __track() {
+        this.target.store.__startTrack(this);
+        let r = this.tracking.valueOf() instanceof Function ?
+            this.tracking() :
+            this.tracking;
+        r.valueOf();
+        this.target.store.__stopTrack(this);
+        if (this.postaction)
+            this.postaction(r);
+        this.tracked = true;
+    }
+    untrack() {
+        this.properties.forEach(p => p.__removeTarget(this));
+        this.properties.length = 0;
     }
 }
 export class Target {
     /**
      * 
      * @param {Store} store
-     * @param {((() => void))[]} actions 
+     * @param {((() => void)| {tracking, postaction, continuousTracking})[]} actions 
      */
     constructor(store, actions) {
         this.store = store;
+        /**@type {TargetAction[]} */
         this.actions = actions.map(a => {
-            return {
-                tracked: false,
-                action: a instanceof Function ?
-                    {
-                        track: a,
-                        action: null
-                    } :
-                    {
-                        track: a.track.valueOf() instanceof Function ?
-                            a.track :
-                            () => a.track.valueOf(),
-                        action: a.action
-                    }
-
-            };
+            return a instanceof Function ?
+                new TargetAction(
+                    this,
+                    a,
+                    null,
+                    false
+                ) :
+                new TargetAction(
+                    this,
+                    a.tracking,
+                    a.postaction,
+                    a.continuousTracking
+                );
         });
-        this.properties = [];
     }
 
     track() {
-        this.actions.forEach(a => {
-            if (!a.tracked) {
-                this.store.track(this, a.action);
-                a.tracked = true;
-            } else {
-                let r = a.action.track();
-                if (a.action.action)
-                    a.action.action(r);
-            }
-        });
+        this.actions.forEach(a => a.shot());
     }
     untrack() {
-        this.actions.forEach(a => {
-            if (a.tracked) {
-                this.properties.forEach(p => p.__removeTarget(a.action));
-                a.tracked = false;
-            }
-        });
-        this.properties.splice(0, this.properties.length);
+        this.actions.forEach(a => a.untrack());
     }
 }
 
 let storeKeyIncrement = 0;
 export class Store {
     constructor() {
+        /**@type {TargetAction[]} */
         this.__track = [];
+        /**@type {Property[]} */
         this.__loaded = [];
     }
 
+    /**@param {TargetAction} target*/
     __startTrack(target) {
+        if (!target.__storeKey) {
+            target.__storeKey = ++storeKeyIncrement;
+        }
         this.__track.push(target);
     }
+    /**@param {TargetAction} target*/
     __stopTrack(target) {
         this.__track.splice(this.__track.indexOf(target), 1);
     }
@@ -469,9 +506,6 @@ export class Store {
         this.__loaded.push(property);
     }
     track(target, action) {
-        if (!action.__storeKey) {
-            action.__storeKey = ++storeKeyIncrement;
-        }
         let t = { target, action };
         this.__startTrack(t);
         let r = action.track();
@@ -486,9 +520,7 @@ export class Store {
             this.__loaded.forEach(p => {
                 p.__targets.forEach(t => {
                     if (!shoted[t.__storeKey]) {
-                        let r = t.track();
-                        if (t.action)
-                            t.action(r);
+                        t.shot();
                         shoted[t.__storeKey] = true;
                     }
                 });

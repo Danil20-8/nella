@@ -41,25 +41,38 @@ class ExpirienceComponent extends Component {
                     ),
                     poolList({
                         data: () => {
+                            let values = data.map(d => {
+                                return {
+                                    data: d,
+                                    value: {
+                                        ageLength: d.age.length.valueOf()
+                                    }
+                                };
+                            });
+
                             switch (state.order % 3) {
                                 case 1:
-                                    return data.map(e => e).sort((l, r) => {
-                                        if (l.age.length.valueOf() > r.age.length.valueOf())
+                                    return values.sort((ld, rd) => {
+                                        let l = ld.value;
+                                        let r = rd.value;
+                                        if (l.ageLength > r.ageLength)
                                             return 1;
-                                        if (l.age.length.valueOf() < r.age.length.valueOf())
+                                        if (l.ageLength < r.ageLength)
                                             return -1;
                                         return 0;
-                                    });
+                                    }).map(v => v.data);
                                 case 2:
-                                    return data.map(e => e).sort((l, r) => {
-                                        if (l.age.length.valueOf() < r.age.length.valueOf())
+                                    return values.sort((ld, rd) => {
+                                        let l = ld.value;
+                                        let r = rd.value;
+                                        if (l.ageLength < r.ageLength)
                                             return 1;
-                                        if (l.age.length.valueOf() > r.age.length.valueOf())
+                                        if (l.ageLength > r.ageLength)
                                             return -1;
                                         return 0;
-                                    });
+                                    }).map(v => v.data);
                                 default:
-                                    return data.map(e => e);
+                                    return data;
                             }
                         },
                         component: (data) => {

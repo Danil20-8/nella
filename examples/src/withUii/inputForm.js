@@ -1,5 +1,11 @@
 import { useStore, list, div, button, inputText, switchComponent } from "../../../uii";
 
+class ImportForm{
+    constructor({ inputs, onsave, oncancel }) {
+        
+    }
+}
+
 export function inputForm({
     inputs,
     onsave,

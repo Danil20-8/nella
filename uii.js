@@ -508,10 +508,11 @@ class ListComponent extends Component {
         this.__store = new Target(store,
             [
                 {
-                    track: () => context.data.valueOf() instanceof Function ?
+                    tracking: () => context.data.valueOf() instanceof Function ?
                         context.data() :
                         context.data,
-                    action: (data) => this.__updateList(data)
+                    postaction: (data) => this.__updateList(data),
+                    continuousTracking: true
                 }
             ]);
 
