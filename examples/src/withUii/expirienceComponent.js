@@ -45,7 +45,8 @@ class ExpirienceComponent extends Component {
                                 return {
                                     data: d,
                                     value: {
-                                        ageLength: d.age.length.valueOf()
+                                        ageLength: d.age.length.valueOf(),
+                                        age: (d.age.match(/\d+/) || [0])[0]
                                     }
                                 };
                             });
@@ -55,9 +56,9 @@ class ExpirienceComponent extends Component {
                                     return values.sort((ld, rd) => {
                                         let l = ld.value;
                                         let r = rd.value;
-                                        if (l.ageLength > r.ageLength)
+                                        if (l.age > r.age)
                                             return 1;
-                                        if (l.ageLength < r.ageLength)
+                                        if (l.age < r.age)
                                             return -1;
                                         return 0;
                                     }).map(v => v.data);
@@ -65,9 +66,9 @@ class ExpirienceComponent extends Component {
                                     return values.sort((ld, rd) => {
                                         let l = ld.value;
                                         let r = rd.value;
-                                        if (l.ageLength < r.ageLength)
+                                        if (l.age < r.age)
                                             return 1;
-                                        if (l.ageLength > r.ageLength)
+                                        if (l.age > r.age)
                                             return -1;
                                         return 0;
                                     }).map(v => v.data);

@@ -16,7 +16,6 @@ window.addEventListener("popstate", function (e) {
                     this.history.back();
                 }
             });
-            this.history.back();
             return;
         }
     }
@@ -70,7 +69,8 @@ export function pushState(state, url, handler) {
     if (!handler.__routerKey) {
         handler.__routerKey = (++routerKeyIncrement).toString();
     }
-
+    if (currentHandler && currentHandler.onexit)
+        currentHandler.onexit();
     handlers[handler.__routerKey] = currentHandler = handler;
     history.pushState({
         key: handler.__routerKey,
@@ -78,6 +78,11 @@ export function pushState(state, url, handler) {
     },
         "router",
         url);
+    if (handler.onenter)
+        handler.onenter(state);
+}
+export function popState() {
+    history.back();
 }
 
 export function useFallbackBackHandler(handler) {

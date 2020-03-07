@@ -103,9 +103,15 @@ function insertBefore(el, child, refchild) {
     }
 }
 export function val(value) {
-    return value instanceof Function ?
-        value() :
+    let r = value ?
+        (value instanceof Function ?
+            value() :
+            value) :
         value;
+    return r && r.valueOf();
+}
+export function isDefined(value) {
+    return value && value.valueOf();
 }
 
 function update(component, state) {
@@ -198,11 +204,13 @@ export class Component {
                 }
                 else if (!k.startsWith("_")) {
                     if (this.element[k] !== undefined) {
-                        if (this.context[k].valueOf() instanceof Function) {
-                            actions.push(() => this.element[k] = this.context[k]().valueOf());
-                        }
-                        else {
-                            actions.push(() => this.element[k] = this.context[k].valueOf());
+                        if (this.context[k]) {
+                            if (this.context[k].valueOf() instanceof Function) {
+                                actions.push(() => this.element[k] = this.context[k]().valueOf());
+                            }
+                            else {
+                                actions.push(() => this.element[k] = this.context[k].valueOf());
+                            }
                         }
                     }
                 }

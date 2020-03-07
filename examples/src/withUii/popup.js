@@ -1,5 +1,5 @@
-import { poolSwitch, div, button, updateUii } from "../../../uii";
-import { pushState } from "../../../router";
+import { poolSwitch, div, button, val, isDefined } from "../../../uii";
+import { pushState, popState } from "../../../router";
 import { Component } from "../../../uii";
 
 class Popup extends Component {
@@ -8,24 +8,58 @@ class Popup extends Component {
     }
 
     awake() {
-        pushState(null, null, {
-            onexit: () => this.context.hide()
-        });
+        pushState(null, null, this);
     }
 
-    component() {
+    component({ message, okHandler, cancelHandler }) {
         return div({
-            style: "position: absolute; left: 33%; right: 33%; top: 25%; bottom: 50%; border: solid 2px green; color green; display: flex; justify-content: center; flex-flow: column;"
+            style: "position: absolute; left: 33vw; right: 33vw; top: 25vh; bottom: 50vh; border: solid 2px green; color green; display: flex; justify-content: center; flex-flow: column;"
         },
-            div({ innerText: "popup", style: "text-align: center" }),
-            button({ innerText: "close", onclick: this.context.hide })
+            div({ innerText: message, style: "text-align: center" }),
+            poolSwitch(
+                {
+                    active: () => val(okHandler),
+                    component: () =>
+                        button({
+                            innerText: "ok",
+                            onclick: () => {
+                                popState();
+                                okHandler();
+                            }
+                        })
+                }
+            ),
+            poolSwitch(
+                {
+                    active: () => val(cancelHandler),
+                    component: () =>
+                        button({
+                            innerText: "cancel",
+                            onclick: () => {
+                                popState();
+                                cancelHandler();
+                            }
+                        })
+                }
+            ),
+            poolSwitch(
+                {
+                    active: () => !(val(okHandler) || val(cancelHandler)),
+                    component: () =>
+                        button({ innerText: "close", onclick: () => { popState(); } })
+                }
+            )
         );
+    }
+
+    onexit() {
+        this.context.hide();
     }
 }
 
-export function popup({ active, hide }) {
+export function popup(context) {
     return poolSwitch({
-        active,
-        component: () => new Popup({ active, hide })
+        active: context.active,
+        component: () => new Popup(context)
     })
 }

@@ -1,12 +1,34 @@
 import { div, mount, switchComponent, inputText, button, list, poolList, useStore, poolSwitch, label, p, UiiTarget } from "../../uii";
-import { pushState, useFallbackBackHandler, restore } from "../../router";
+import { pushState, useFallbackBackHandler, restore, popState } from "../../router";
 import { popup } from "./withUii/popup";
 import { expirienceComponent } from "./withUii/expirienceComponent";
+import { menuComponent } from "./withUii/menu";
 
 // Experimental default history popstate handler
 useFallbackBackHandler(() => {
     route.pathname = location.pathname;
 });
+
+/*pushState(null, null, {
+    onenter: function () {
+        console.log("Leaving!");
+        if (this.entered) {
+            popupStore.pushPopup({
+                message: "Wow! Where are you going? You are leaving! Please stay!",
+                okHandler: () => {
+                    popState();
+                },
+                cancelHandler: function () {
+                    popupStore.closePopup();
+                    pushState(null, null, {});
+                }
+            })
+        }
+
+        this.entered = true;
+    }
+});
+pushState(null, null, {});*/
 
 // Defining stores
 // useStore returns proxy of your source object
@@ -67,9 +89,25 @@ mount(document.body,
     popup({
         // arrow function will be called automatically on component creating and each time then in use store properties changed
         active: () => popupStore.queue.length > 0,
-        hide: popupStore.closePopup
+        hide: popupStore.closePopup,
+        message: () => popupStore.queue[0].message,
+        okHandler: () => popupStore.queue[0].okHandler,
+        cancelHandler: () => popupStore.queue[0].cancelHandler
     }),
-    button({ innerText: "boo!", onclick: () => popupStore.pushPopup({}) }),
+    menuComponent({
+        title: "Menu", options: [
+            {
+                title: "home", trigger: route.gotoHome
+            },
+            {
+                title: "content", trigger: route.gotoContent
+            },
+            {
+                title: "resume", trigger: route.gotoResume
+            }
+        ]
+    }),
+    button({ innerText: "boo!", onclick: () => popupStore.pushPopup({ message: "be scaring!" }) }),
     div({
         // component will update its attributes when store property changed
         innerText: store.name

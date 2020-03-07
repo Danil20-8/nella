@@ -233,8 +233,9 @@ class PropertySource {
                     return this.valueOf().toString();
                 },
                 valueOf: function () {
-                    if (property.__store.__track.length > 0) {
-                        property.__store.__track.forEach(t => property.__addTarget(t));
+                    let track = property.__store.__track;
+                    if (track.length > 0) {
+                        property.__addTarget(track[track.length - 1]);
                     }
 
                     let v = property.__propName === undefined ?
@@ -336,7 +337,7 @@ class PropertyProxyHandler {
                 return this.__target.__sourceContainer.source[this.__target.__propName][prop];
             }
 
-            /**@type{Property} */
+            /**@type {Property} */
             let property = this.__target.__properties[prop];
             if (property === undefined) {
                 let propStore = this.__target.__propName !== undefined ?
@@ -351,8 +352,9 @@ class PropertyProxyHandler {
             else if (property instanceof Function) {
                 return _[prop];
             }
-            if (this.__target.__store.__track.length > 0) {
-                this.__target.__store.__track.forEach(t => property.__addTarget(t));
+            let track = property.__store.__track;
+            if (track.length > 0) {
+                property.__addTarget(track[track.length - 1]);
             }
 
             return property.__proxy;
@@ -503,7 +505,11 @@ export class Store {
     }
     /**@param {TargetAction} target*/
     __stopTrack(target) {
-        this.__track.splice(this.__track.indexOf(target), 1);
+        if (this.__track[this.__track.length - 1] === target)
+            this.__track.length -= 1;
+        else
+            throw new Error("bad tracking flow: you should stop tracking in reverse order of start tracking. async tracking is not supported yet!");
+            //this.__track.splice(this.__track.indexOf(target), 1);
     }
     __load(property) {
         this.__loaded.push(property);
