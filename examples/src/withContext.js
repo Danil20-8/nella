@@ -1,4 +1,4 @@
-import { Context, poolList, switchComponent, poolSwitch } from "../../index";
+import { Context, poolList, switchComponent, poolSwitch } from "../../oldIndex";
 import { useAuthComponent } from "./withContext/auth";
 import useTimerComponent from "./withContext/timerComponent";
 import usePage from "./withContext/page";

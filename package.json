@@ -1,0 +1,27 @@
+{
+  "name": "nella",
+  "version": "0.7.4",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Danil20-8/uii.git"
+  },
+  "keywords": [
+    "application",
+    "UI",
+    "framework",
+    "javascript",
+    "js",
+    "web",
+    "browser",
+    "application"
+  ],
+  "author": "Danil Redreev",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Danil20-8/uii/issues"
+  },
+  "homepage": "https://github.com/Danil20-8/uii#readme"
+}

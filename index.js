@@ -1,3 +1,6 @@
+import { Store, Target, Property } from "./shotcard";
+const store = new Store();
+
 function getElement(component) {
     if (component) {
         if (component instanceof HTMLElement) {
@@ -100,9 +103,15 @@ function insertBefore(el, child, refchild) {
     }
 }
 export function val(value) {
-    return value instanceof Function ?
-        value() :
+    let r = value ?
+        (value instanceof Function ?
+            value() :
+            value) :
         value;
+    return r && r.valueOf();
+}
+export function isDefined(value) {
+    return value && value.valueOf();
 }
 
 function update(component, state) {
@@ -124,16 +133,31 @@ function remove(component) {
     }
 }
 
+function setHooks(context) {
+    Object.keys(context).forEach(k => {
+        if (k.startsWith("on")) {
+            let handler = context[k];
+            context[k] = async (...args) => {
+                let r = handler(...args);
+                while (r instanceof Promise)
+                    r = await r;
+                store.shot();
+                return r;
+            }
+        }
+    });
+}
+
 export class Component {
     /**
      * 
      * @param {*} html 
      * @param {*} context 
-     * @param {Component[]} children 
+     * @param {(Component | (() => Component))[]} children 
      */
     constructor(html, context, children) {
         this.context = context;
-        this.awake();
+        this.awake(this.context);
 
         this.children = children || this.component(context);
         if (!Array.isArray(this.children)) {
@@ -171,7 +195,7 @@ export class Component {
                 append(this.element, ...this.children);
             }
 
-            this.__backedContext = [];
+            let actions = []
             let contextKeys = Object.keys(this.context);
             for (let i = 0; i < contextKeys.length; ++i) {
                 let k = contextKeys[i];
@@ -180,14 +204,19 @@ export class Component {
                 }
                 else if (!k.startsWith("_")) {
                     if (this.element[k] !== undefined) {
-                        this.__backedContext.push(() => {
-                            let v = val(this.context[k]);
-                            if (this.element[k] !== v)
-                                this.element[k] = v;
-                        });
+                        if (this.context[k]) {
+                            if (this.context[k].valueOf() instanceof Function) {
+                                actions.push(() => this.element[k] = this.context[k]().valueOf());
+                            }
+                            else {
+                                actions.push(() => this.element[k] = this.context[k].valueOf());
+                            }
+                        }
                     }
                 }
             }
+
+            this.__store = new Target(store, actions);
 
             this.__applyHtmlContext();
 
@@ -211,23 +240,19 @@ export class Component {
         return [];
     }
     __reset() {
-        this.children.forEach(c => c.__reset());
-        if (Array.isArray(this.element)) {
-            this.element.forEach(e => e.__reset());
-        }
-        if (this.element instanceof Component)
-            this.element.__reset();
-
         this.__started = false;
 
-        this.awake();
-
+        this.awake(this.context);
         this.__applyHtmlContext();
+
+        this.children.forEach(c => c.__reset());
     }
     awake() {
 
     }
     __start() {
+        this.children.forEach(c => c.__start());
+
         this.__started = true;
 
         return this.start();
@@ -236,34 +261,19 @@ export class Component {
     }
     __stop() {
         this.children.forEach(c => c.__stop());
-        if (Array.isArray(this.element)) {
-            this.element.forEach(e => e.__stop());
-        }
 
         this.stop();
         this.__started = false;
+
+        if (this.element instanceof HTMLElement) {
+            this.__store.untrack();
+        }
     }
     stop() {
     }
-    async update() {
-        if (!this.__started) {
-            await this.__start();
-        }
-        try {
-            this.__applyHtmlContext();
-
-            this.children.forEach(c => update(c));
-        }
-        catch (e) {
-            if (!e.componentStack)
-                e.componentStack = [];
-            e.componentStack.push(this);
-            throw e;
-        }
-    }
     __applyHtmlContext() {
         if (this.element instanceof HTMLElement) {
-            this.__backedContext.forEach(c => c());
+            this.__store.track();
         }
     }
     remove() {
@@ -276,7 +286,31 @@ export class Component {
 function component(name, context, ...children) {
     return new Component(name, context, children);
 }
+class PoolProxy {
+    constructor(valueContainer) {
+        this.valueContainer = valueContainer;
+        return new Proxy(Object.assign(valueContainer,
+            {
+                toString: function () { return valueContainer.value.toString(); },
+                valueOf: function () { return valueContainer.value.valueOf(); }
+            }), this)
+    }
 
+    get(_, prop) {
+        switch (prop) {
+            case "valueOf":
+            case "toString":
+                return _[prop];
+        }
+
+        return this.valueContainer.value[prop];
+    }
+
+    set(_, prop, value) {
+        this.valueContainer.value[prop] = value;
+        return true;
+    }
+}
 class ComponentPool {
     /**
      * 
@@ -299,21 +333,16 @@ class ComponentPool {
     pop(context) {
         let element = this.__pool.pop();
         if (element) {
-            element.__pool.__context = context;
+            element.__pool.context = context;
             element.__reset();
             return element;
         }
         else {
-            let pool = { __context: context };
-            if (context)
-                Object.keys(context).forEach(k => {
-                    Object.defineProperty(pool, k, {
-                        get: function () { return this.__context[k]; },
-                        set: function (value) { this.__context[k] = value; }
-                    });
-                });
+            let pool = useStore({
+                context
+            });
 
-            element = new Component(null, pool, this.__component(pool));
+            element = new Component(null, pool, this.__component(pool.context));
             element.__pool = pool;
             element.__remove = element.remove;
             element.remove = () => {
@@ -327,44 +356,52 @@ class ComponentPool {
 /**
  * 
  * @param {*} context 
- * @param  {...Component} children 
+ * @param  {...(Component| (() => Component))} children 
  */
-function div(context, ...children) {
+export function div(context, ...children) {
+    setHooks(context);
     return component("div", context, ...children)
 }
-function span(context, ...children) {
+export function span(context, ...children) {
+    setHooks(context);
     return component("span", context, ...children);
 }
-function input(context, type) {
+export function input(context, type) {
+    setHooks(context);
     return component("input", Object.assign(context, { type: type }));
 }
-function inputText(context) {
+export function inputText(context) {
     return input(context, "text");
 }
-function inputSubmit(context) {
+export function inputSubmit(context) {
     return input(context, "submit");
 }
-function checkbox(context) {
+export function checkbox(context) {
     return input(context, "checkbox");
 }
-function radio(context) {
+export function radio(context) {
     return input(context, "radio");
 }
-function label(context, ...children) {
+export function label(context, ...children) {
+    setHooks(context);
     return component("label", context, ...children);
 }
-function a(context, ...children) {
+export function a(context, ...children) {
+    setHooks(context);
     return component("a", context, ...children);
 }
 
-function p(context, ...children) {
+export function p(context, ...children) {
+    setHooks(context);
     return component("p", context, ...children);
 }
-function button(context) {
+export function button(context) {
+    setHooks(context);
     return component("button", context);
 }
 
-function select(context) {
+export function select(context) {
+    setHooks(context);
     let options = context.options;
     delete context.options;
     if (options instanceof Function) {
@@ -400,7 +437,8 @@ function select(context) {
     );
 }
 
-function iframe(context, ...children) {
+export function iframe(context, ...children) {
+    setHooks(context);
     let e = component("iframe", context);
     let componentUpdate = e.update.bind(e.update);
     let el = getElement(e);
@@ -416,6 +454,11 @@ function iframe(context, ...children) {
         }
     }, 30);
     return e;
+}
+export function mount(element, ...children) {
+    let c = new Component(element, {}, children);
+    c.__start();
+    return c;
 }
 /**
  * 
@@ -433,14 +476,8 @@ function iframe(context, ...children) {
  * @param  {...{ active: (() => boolean) | boolean, component: () => Component }} items 
  */
 export function switchComponent(...items) {
-    if (items[0].items !== undefined) {
-        return list({
-            data: () => items[0].items.filter(i => val(i.active)).slice(0, items[1] || 1),
-            component: (i) => (i.createElement || i.component)()
-        });
-    }
     return list({
-        data: () => items.filter(i => val(i.active)).slice(0, 1),
+        data: () => items.filter(i => val(i.active.valueOf())).slice(0, 1),
         component: (i) => i.component()
     });
 }
@@ -470,7 +507,18 @@ class ListComponent extends Component {
         this.elements = children;
         this.dict = {};
 
-        this.__updateList();
+        this.__store = new Target(store,
+            [
+                {
+                    tracking: () => context.data.valueOf() instanceof Function ?
+                        context.data() :
+                        context.data,
+                    postaction: (data) => this.__updateList(data),
+                    continuousTracking: true
+                }
+            ]);
+
+        this.__store.track();
     }
     __insertAt(index, element) {
         if (this.__started) {
@@ -482,35 +530,32 @@ class ListComponent extends Component {
             }
         }
     }
-    update() {
-        this.__updateList();
 
-        super.update();
-    }
-    __updateList() {
-        let data = val(this.context.data);
-
+    __updateList(data) {
         let replaced = {};
         let inserted = {};
-
+        let newElements = [];
         for (let i = 0; i < data.length; ++i) {
             let nd = data[i];
+            let ndValue = nd.valueOf();
             let od = this.oldData[i];
 
-            let doObj = nd instanceof Object;
+            let doObj = ndValue instanceof Object;
+            if (!doObj)
+                nd = ndValue;
 
-            if (doObj && nd == od)
+            if (doObj && ndValue === od)
                 continue;
-
             let key = doObj ?
-                nd["__key"] || (nd["__key"] = ++__listComponentKeyIncrement) :
+                (ndValue["__key"]) || (ndValue["__key"] = ++__listComponentKeyIncrement) :
                 nd;
 
             let element = this.dict[key];
 
             if (!element) {
-                element = new Component(null, nd, this.context.component(nd));
+                element = new Component(null, {}, this.context.component(nd));
                 element.__parent = this;
+                newElements.push(element);
 
                 if (doObj) {
                     this.dict[key] = element;
@@ -535,8 +580,9 @@ class ListComponent extends Component {
                 if (!doObj) {
                     let it = inserted[key];
                     if (it && it.length >= element.length) {
-                        let el = new Component(null, nd, this.context.component(nd));
+                        let el = new Component(null, {}, this.context.component(nd));
                         element.__parent = this;
+                        newElements.push(el);
 
                         element.push(el);
                         element = el;
@@ -557,7 +603,7 @@ class ListComponent extends Component {
                         else
                             inserted[key] = [element];
 
-                        if (nd == od)
+                        if (ndValue === od)
                             continue;
                     }
                 }
@@ -608,7 +654,7 @@ class ListComponent extends Component {
             }
             else {
                 //console.log(insertIndex, nd, this, getNextSibling(this, true));
-
+    
                 insertBefore(this.__parent, element, getNextSibling(this, true));
             }*/
 
@@ -632,7 +678,7 @@ class ListComponent extends Component {
                 }
             }
             this.elements[i] = element;
-            this.oldData[i] = nd;
+            this.oldData[i] = ndValue;
         }
 
         Object.keys(replaced)
@@ -642,7 +688,7 @@ class ListComponent extends Component {
                 if (Array.isArray(t)) {
                     t.forEach(e => {
                         remove(e);
-                        d.splice(d.indexOf(element), 1);
+                        d.splice(d.indexOf(e), 1);
                     }
                     );
 
@@ -694,12 +740,15 @@ class ListComponent extends Component {
 
             if (this.elements.length > 0)
                 this.elements[this.elements.length - 1].__nextSibling = null;
+
         }
+
+        newElements.forEach(e => e.__start());
     }
 }
 /**
  * 
- * @param {{ data: T[], createElement?: (data: T) => Component, component: (data: T) => Component }} context 
+ * @param {{ data: T[], createElement?: (data: T) => Component, component: (data: T) => (Component | Component[]) }} context 
  */
 export function list(context) {
     return new ListComponent(context);
@@ -724,163 +773,20 @@ export function usePoolComponent(component) {
     return () => pool.pop();
 }
 
-export class Context {
+export class UiiTarget extends Target {
     /**
      * 
-     * @param  {Context[]} siblingContexts 
+     * @param {(() => void)[]} actions 
      */
-    constructor(data, siblingContexts) {
-        this.__element = null;
-        this.__mounted = false;
-        this.__siblingAppContexts = siblingContexts || [];
-        this.data = data;
-        let setHooks = (context) => {
-            Object.keys(context).forEach(k => {
-                if (k.startsWith("on")) {
-                    let handler = context[k];
-                    context[k] = async (...args) => {
-                        let r = handler(...args);
-                        while (r instanceof Promise)
-                            r = await r;
-                        this.update();
-                        return r;
-                    }
-                }
-            });
-        }
-
-        this.div = function (context, ...children) {
-            setHooks(context);
-            return div(context, ...children);
-        };
-        this.span = function (context, ...children) {
-            setHooks(context);
-            return span(context, ...children);
-        };
-        this.inputText = function (context) {
-            setHooks(context);
-            return inputText(context);
-        };
-        this.select = function (context) {
-            setHooks(context);
-            return select(context);
-        };
-        this.button = function (context) {
-            setHooks(context);
-            return button(context);
-        };
-        this.p = function (context, ...children) {
-            setHooks(context);
-            return p(context, ...children);
-        };
-        this.label = function (context, ...children) {
-            setHooks(context);
-            return label(context, ...children);
-        };
-        this.a = function (context, ...children) {
-            setHooks(context);
-            return a(context, ...children);
-        };
-        this.iframe = function (context, ...children) {
-            setHooks(context);
-            return iframe(context, ...children);
-        };
-
-        this.mount = this.mount.bind(this);
-        this.component = this.component.bind(this);
-        this.update = this.update.bind(this);
-        this.error = this.error.bind(this);
-    }
-
-    /**
-     * 
-     * @param {HTMLElement} element
-     * @param {...Component} children 
-     * @returns {Component}
-     */
-    mount(element, ...children) {
-        if (this.__mounted) {
-            throw new Error("context is already mounted");
-        }
-        this.__element = component(element, {}, ...children);
-
-        this.__mounted = true;
-        this.update();
-
-        return this.__element;
-    }
-    /**
-     * 
-     * @param {Component} element
-     * @returns {Component}
-     */
-    component(element) {
-        if (!this.__mounted) {
-            let elementUpdate = element.update;
-
-            element.update = () => {
-                if (!this.__mounted) {
-                    this.__mounted = true;
-                }
-
-                element.update = elementUpdate;
-                element.update();
-            }
-
-            this.__element = element;
-        }
-
-        return element;
-    }
-
-    update() {
-        let start = Date.now();
-        try {
-            this.__element.update();
-
-            this.__siblingAppContexts.forEach(c => {
-                c.update();
-            });
-        }
-        catch (e) {
-            this.error(e);
-        }
-        console.log("update time", Date.now() - start);
-    }
-    error(e) {
-        if (e.componentStack)
-            console.error(e, e.componentStack);
-        else
-            console.error(e);
+    constructor(actions) {
+        super(store, actions);
     }
 }
 
-/**
- * 
- * @param {Context} htmljs 
- * @param {Context} parentHtmljs
- * @returns {Context}
- */
-export function useHtmljs(htmljs, parentHtmljs) {
-    return {
-        ...(parentHtmljs || htmljs),
-
-        component: htmljs.component,
-        data: htmljs
-    };
+export function useStore(data) {
+    return new Property(store, data).__proxy;
 }
 
-/**
- * 
- * @param {Context} htmljs 
- * @param {Context} parentHtmljs 
- * @param {(htmljs: Context) => (context) => Component} useComponent 
- * @returns {(context) => Component}
- */
-export function useComponent(htmljs, parentHtmljs, useComponent) {
-    return useComponent({
-        ...(parentHtmljs || htmljs),
-
-        component: htmljs.component
-    });
+export function updateUii() {
+    store.shot();
 }

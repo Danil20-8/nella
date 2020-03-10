@@ -1,4 +1,4 @@
-import { val, component, body, div, inputText, list, button, switchComponent, p, Component } from "../../index";
+import { val, component, body, div, inputText, list, button, switchComponent, p, Component } from "../../oldIndex";
 
 class SearchComponent extends Component {
     /*context;

@@ -1,4 +1,4 @@
-import { updateUii } from "./uii";
+import { updateUii } from ".";
 
 let handlers = {};
 let currentHandler = null;

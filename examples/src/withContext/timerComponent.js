@@ -1,4 +1,4 @@
-import { Context, val, switchComponent, Component, body, useHtmljs } from "../../..";
+import { Context, val, switchComponent, Component, body, useHtmljs } from "../../../oldIndex";
 
 /**
  * 

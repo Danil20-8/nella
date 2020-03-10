@@ -1,4 +1,4 @@
-import { useHtmljs } from "../../../index";
+import { useHtmljs } from "../../../oldIndex";
 
 export function useInputField(context) {
     let { div, switchComponent, inputText, body, list } = useHtmljs(context);

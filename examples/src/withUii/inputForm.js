@@ -1,4 +1,4 @@
-import { useStore, list, div, button, inputText, switchComponent, Component, UiiTarget } from "../../../uii";
+import { useStore, list, div, button, inputText, switchComponent, Component, UiiTarget } from "../../..";
 
 class InputForm extends Component {
     constructor(context) {

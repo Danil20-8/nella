@@ -1,4 +1,4 @@
-import { useHtmljs, val, switchComponent } from "../../..";
+import { useHtmljs, val, switchComponent } from "../../../oldIndex";
 
 export default function usePage(htmljs, parentHtmljs) {
     let { component, div, button } = useHtmljs(htmljs, parentHtmljs);

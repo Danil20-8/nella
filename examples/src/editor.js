@@ -1,4 +1,4 @@
-import { val, useHtmljs, Context } from "../../index";
+import { val, useHtmljs, Context } from "../../oldIndex";
 import "./editor.css";
 import useSandboxComponent from "./editor/sandbox";
 import useCssEditor from "./editor/css";

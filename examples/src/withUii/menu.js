@@ -1,4 +1,4 @@
-import { poolSwitch, div, span, useStore, list, button, Component } from "../../../uii";
+import { poolSwitch, div, span, useStore, list, button, Component } from "../../..";
 import { pushState, popState } from "../../../router";
 
 class MenuComponent extends Component {
@@ -53,12 +53,15 @@ function header({ title, active, toggle }) {
     );
 }
 function body({ options }) {
-    return div({},
+    return div({
+        style: "position:absolute; left: 0; right: 0;"
+    },
         list({
             data: options,
             component: (data) =>
                 div({},
                     button({
+                        style: "width: 100%;",
                         innerText: data.title,
                         onclick: () => {
                             data.trigger();

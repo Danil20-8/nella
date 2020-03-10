@@ -1,4 +1,4 @@
-import { useHtmljs, Component, list } from "../../..";
+import { useHtmljs, Component, list } from "../../../oldIndex";
 
 export default function useSlowComponent(context, parentContext) {
     let { component, div, span } = useHtmljs(context, parentContext);

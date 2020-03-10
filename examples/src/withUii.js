@@ -1,4 +1,4 @@
-import { div, mount, switchComponent, inputText, button, list, poolList, useStore, poolSwitch, label, p, UiiTarget } from "../../uii";
+import { div, mount, switchComponent, inputText, button, list, poolList, useStore, poolSwitch, label, p, UiiTarget } from "../..";
 import { pushState, useFallbackBackHandler, restore, popState } from "../../router";
 import { popup } from "./withUii/popup";
 import { expirienceComponent } from "./withUii/expirienceComponent";

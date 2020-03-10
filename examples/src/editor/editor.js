@@ -1,4 +1,4 @@
-import { Context, useHtmljs } from "../../../index";
+import { Context, useHtmljs } from "../../../oldIndex";
 import useSideEditorComponent from "./side";
 import useSandboxComponent from "./sandbox";
 import useCssEditor from "./css";

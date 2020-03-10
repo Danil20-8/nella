@@ -1,6 +1,6 @@
-import { poolSwitch, div, button, val, isDefined } from "../../../uii";
+import { poolSwitch, div, button, val, isDefined } from "../../..";
 import { pushState, popState } from "../../../router";
-import { Component } from "../../../uii";
+import { Component } from "../../..";
 
 class Popup extends Component {
     constructor(context) {
