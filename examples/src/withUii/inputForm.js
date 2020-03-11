@@ -1,9 +1,6 @@
 import { useStore, list, div, button, inputText, switchComponent, Component, NTarget } from "../../..";
 
 class InputForm extends Component {
-    constructor(context) {
-        super(null, context);
-    }
     awake({ inputs }) {
         this.state = Object.assign(this.state || useStore({}),
             {

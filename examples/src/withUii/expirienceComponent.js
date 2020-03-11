@@ -2,9 +2,6 @@ import { label, Component, useStore, button, poolList, div, poolSwitch, list } f
 import { inputForm } from "./inputForm";
 
 class ExpirienceComponent extends Component {
-    constructor(data) {
-        super(null, data);
-    }
     awake() {
 
     }

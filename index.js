@@ -141,11 +141,11 @@ function setHooks(context) {
 export class Component {
     /**
      * 
-     * @param {*} html 
      * @param {*} context 
+     * @param {*} html 
      * @param {(Component | (() => Component))[]} children 
      */
-    constructor(html, context, children) {
+    constructor(context, html, children) {
         this.context = context;
         this.awake(this.context);
 
@@ -163,7 +163,7 @@ export class Component {
             else if (c instanceof Function) {
                 c = c(context);
                 if (c)
-                    this.children[i] = new Component(null, context, c);
+                    this.children[i] = new Component(context, null, c);
                 else {
                     this.children.splice(i, 1);
                     --i;
@@ -274,7 +274,7 @@ export class Component {
     }
 }
 function component(name, context, ...children) {
-    return new Component(name, context, children);
+    return new Component(context, name, children);
 }
 class ComponentPool {
     /**
@@ -307,7 +307,7 @@ class ComponentPool {
                 context
             });
 
-            element = new Component(null, pool, this.__component(pool.context));
+            element = new Component(pool, null, this.__component(pool.context));
             element.__pool = pool;
             element.__remove = element.remove;
             element.remove = () => {
@@ -477,7 +477,7 @@ export function iframe(context, ...children) {
     return e;
 }
 export function mount(element, ...children) {
-    let c = new Component(element, {}, children);
+    let c = new Component({}, element, children);
     c.__start();
     return c;
 }
@@ -519,7 +519,7 @@ class ListComponent extends Component {
      */
     constructor(context) {
         let children = [];
-        super(null, context, children);
+        super(context, null, children);
 
         if (!context.component)
             context.component = context.createElement;
@@ -574,7 +574,7 @@ class ListComponent extends Component {
             let element = this.dict[key];
 
             if (!element) {
-                element = new Component(null, {}, this.context.component(nd));
+                element = new Component({}, null, this.context.component(nd));
                 element.__parent = this;
                 newElements.push(element);
 
@@ -601,7 +601,7 @@ class ListComponent extends Component {
                 if (!doObj) {
                     let it = inserted[key];
                     if (it && it.length >= element.length) {
-                        let el = new Component(null, {}, this.context.component(nd));
+                        let el = new Component({}, null, this.context.component(nd));
                         element.__parent = this;
                         newElements.push(el);
 

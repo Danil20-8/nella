@@ -3,10 +3,6 @@ import { pushState, popState } from "../../../router";
 import { Component } from "../../..";
 
 class Popup extends Component {
-    constructor(context) {
-        super(null, context);
-    }
-
     awake() {
         pushState(null, null, this);
     }

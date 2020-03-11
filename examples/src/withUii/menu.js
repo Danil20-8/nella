@@ -2,10 +2,6 @@ import { poolSwitch, div, span, useStore, list, button, Component } from "../../
 import { pushState, popState } from "../../../router";
 
 class MenuComponent extends Component {
-    constructor(context) {
-        super(null, context);
-    }
-
     awake() {
         this.state = this.state || useStore({
             active: false

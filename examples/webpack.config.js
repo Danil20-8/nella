@@ -3,7 +3,8 @@ const webpack = require('webpack');
 module.exports = {
   //mode: 'development',
   entry: {
-    withUii: "./src/withUii.js"
+    withUii: "./src/withUii.js",
+    index: "./src/index.ts"
   },
   devtool: false,
   plugins: [
@@ -19,6 +20,11 @@ module.exports = {
       {
         test: /\.css$/i,
         use: ['style-loader', 'css-loader'],
+      },
+      {
+        test: /\.tsx?$/,
+        use: 'ts-loader',
+        exclude: /node_modules/,
       },
     ],
   }
