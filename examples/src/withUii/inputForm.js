@@ -1,4 +1,4 @@
-import { useStore, list, div, button, inputText, switchComponent, Component, UiiTarget } from "../../..";
+import { useStore, list, div, button, inputText, switchComponent, Component, NTarget } from "../../..";
 
 class InputForm extends Component {
     constructor(context) {
@@ -11,8 +11,8 @@ class InputForm extends Component {
             }
         );
 
-        /**@type {UiiTarget} */
-        this.track = this.track || new UiiTarget([
+        /**@type {NTarget} */
+        this.track = this.track || new NTarget([
             () => (this.state.values = inputs.map((e, i) => (e.value && e.value.valueOf()) || ""))
         ]);
 

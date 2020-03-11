@@ -110,17 +110,7 @@ export function val(value) {
         value;
     return r && r.valueOf();
 }
-export function isDefined(value) {
-    return value && value.valueOf();
-}
 
-function update(component, state) {
-    if (component.update instanceof Function) {
-        component.update(state);
-    } else if (component.element && component.element.update instanceof Function) {
-        component.element.update(state);
-    }
-}
 function remove(component) {
     if (component.remove instanceof Function) {
         component.remove();
@@ -286,31 +276,6 @@ export class Component {
 function component(name, context, ...children) {
     return new Component(name, context, children);
 }
-class PoolProxy {
-    constructor(valueContainer) {
-        this.valueContainer = valueContainer;
-        return new Proxy(Object.assign(valueContainer,
-            {
-                toString: function () { return valueContainer.value.toString(); },
-                valueOf: function () { return valueContainer.value.valueOf(); }
-            }), this)
-    }
-
-    get(_, prop) {
-        switch (prop) {
-            case "valueOf":
-            case "toString":
-                return _[prop];
-        }
-
-        return this.valueContainer.value[prop];
-    }
-
-    set(_, prop, value) {
-        this.valueContainer.value[prop] = value;
-        return true;
-    }
-}
 class ComponentPool {
     /**
      * 
@@ -366,6 +331,14 @@ export function span(context, ...children) {
     setHooks(context);
     return component("span", context, ...children);
 }
+export function img(context) {
+    setHooks(context);
+    return component("img", context);
+}
+export function form(context, ...children) {
+    setHooks(context);
+    return component("form", ...children);
+}
 export function input(context, type) {
     setHooks(context);
     return component("input", Object.assign(context, { type: type }));
@@ -390,6 +363,55 @@ export function a(context, ...children) {
     setHooks(context);
     return component("a", context, ...children);
 }
+export function h1(context, ...children) {
+    setHooks(context);
+    return component("h1", context, ...children);
+}
+export function h2(context, ...children) {
+    setHooks(context);
+    return component("h2", context, ...children);
+}
+export function h3(context, ...children) {
+    setHooks(context);
+    return component("h3", context, ...children);
+}
+export function h4(context, ...children) {
+    setHooks(context);
+    return component("h4", context, ...children);
+}
+export function h5(context, ...children) {
+    setHooks(context);
+    return component("h5", context, ...children);
+}
+export function h6(context, ...children) {
+    setHooks(context);
+    return component("h6", context, ...children);
+}
+
+export function table(context, ...children) {
+    setHooks(context);
+    return component("table", context, ...children);
+}
+export function thead(context, ...children) {
+    setHooks(context);
+    return component("thead", context, ...children);
+}
+export function tbody(context, ...children) {
+    setHooks(context);
+    return component("tbody", context, ...children);
+}
+export function th(context, ...children) {
+    setHooks(context);
+    return component("th", context, ...children);
+}
+export function td(context, ...children) {
+    setHooks(context);
+    return component("td", context, ...children);
+}
+export function tr(context, ...children) {
+    setHooks(context);
+    return component("tr", context, ...children);
+}
 
 export function p(context, ...children) {
     setHooks(context);
@@ -399,7 +421,6 @@ export function button(context) {
     setHooks(context);
     return component("button", context);
 }
-
 export function select(context) {
     setHooks(context);
     let options = context.options;
@@ -773,7 +794,7 @@ export function usePoolComponent(component) {
     return () => pool.pop();
 }
 
-export class UiiTarget extends Target {
+export class NTarget extends Target {
     /**
      * 
      * @param {(() => void)[]} actions 
@@ -787,6 +808,6 @@ export function useStore(data) {
     return new Property(store, data).__proxy;
 }
 
-export function updateUii() {
+export function updateN() {
     store.shot();
 }

@@ -1,4 +1,4 @@
-import { div, mount, switchComponent, inputText, button, list, poolList, useStore, poolSwitch, label, p, UiiTarget } from "../..";
+import { div, mount, switchComponent, inputText, button, list, poolList, useStore, poolSwitch, label, p, NTarget } from "../..";
 import { pushState, useFallbackBackHandler, restore, popState } from "../../router";
 import { popup } from "./withUii/popup";
 import { expirienceComponent } from "./withUii/expirienceComponent";
@@ -9,6 +9,7 @@ useFallbackBackHandler(() => {
     route.pathname = location.pathname;
 });
 
+// Experimental: popup on first history entry move back to confirm page exit
 /*pushState(null, null, {
     onenter: function () {
         console.log("Leaving!");
@@ -37,7 +38,7 @@ let store = useStore({
     langs: ["en", "ru"],
     expirience: [{ name: "cook", age: "3 years" }, { name: "pilot", "age": "1 year" }]
 });
-new UiiTarget([
+new NTarget([
     // Debug main state logging
     /*{
         tracking: () => console.log(store.expirience.map(e => `${e.name} ${e.age}`).join(", ")),

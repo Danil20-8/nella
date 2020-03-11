@@ -1,4 +1,4 @@
-import { poolSwitch, div, button, val, isDefined } from "../../..";
+import { poolSwitch, div, button, val } from "../../..";
 import { pushState, popState } from "../../../router";
 import { Component } from "../../..";
 

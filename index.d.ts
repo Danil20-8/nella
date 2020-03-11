@@ -1,14 +1,25 @@
-import * as uui from "./"
-
+import * as ll from "./"
 export interface ComponentContextInterface {
     innerText?: string
     title?: string
-    innerHtml?: string
+    innerHTML?: string
     style?: CSSStyleDeclaration
     value?: string,
     className?: string,
     checked?: boolean
     lang?: string
+    href?: string
+    src?: string
+    width?: number
+    height?: number
+    size?: number
+    tabIndex?: number
+    action?: string
+    method?: string
+    name?: string
+    type?: string
+    colspan?: number
+    rowspan?: number
     onabort?: ((this: GlobalEventHandlers, ev: UIEvent) => any) | null;
     onanimationcancel?: ((this: GlobalEventHandlers, ev: AnimationEvent) => any) | null;
     onanimationend?: ((this: GlobalEventHandlers, ev: AnimationEvent) => any) | null;
@@ -272,63 +283,107 @@ export interface ComponentContextInterface {
     onwheel?: ((this: GlobalEventHandlers, ev: WheelEvent) => any) | null;
 }
 
-type CoponentChildrenType = uui.Component | (() => uui.Component);
+type CoponentChildrenType = ll.Component | (() => ll.Component);
 
-export class Component extends uui.Component {
+export class Component extends ll.Component {
     constructor(element: string | HTMLElement | null, context: ComponentContextInterface | any | null, children: CoponentChildrenType[]) {
         super(element, context, children);
     }
 }
 
 export function div(context: ComponentContextInterface, ...children: CoponentChildrenType[]) {
-    return uui.div(context, ...children);
+    return ll.div(context, ...children);
 }
 export function span(context: ComponentContextInterface, ...children: CoponentChildrenType[]) {
-    return uui.span(context, ...children);
+    return ll.span(context, ...children);
+}
+export function img(context: ComponentContextInterface) {
+    return ll.img(context);
+}
+export function form(context: ComponentContextInterface, ...children: CoponentChildrenType[]) {
+    return ll.form(context, ...children);
 }
 export function inputText(context: ComponentContextInterface) {
-    return uui.inputText(context);
+    return ll.inputText(context);
 }
 export function inputSubmit(context: ComponentContextInterface) {
-    return uui.inputSubmit(context);
+    return ll.inputSubmit(context);
 }
 export function checkbox(context: ComponentContextInterface) {
-    return uui.checkbox(context);
+    return ll.checkbox(context);
 }
 export function radio(context: ComponentContextInterface) {
-    return uui.radio(context);
+    return ll.radio(context);
 }
 export function label(context: ComponentContextInterface, ...children: CoponentChildrenType[]) {
-    return uui.label(context, ...children)
+    return ll.label(context, ...children)
 }
 export function a(context: ComponentContextInterface, ...children: CoponentChildrenType[]) {
-    return uui.a(context, ...children);
+    return ll.a(context, ...children);
 }
 
+export function h1(context: ComponentContextInterface, ...children: CoponentChildrenType[]) {
+    return ll.h1(context, ...children);
+}
+
+export function h2(context: ComponentContextInterface, ...children: CoponentChildrenType[]) {
+    return ll.h2(context, ...children);
+}
+export function h3(context: ComponentContextInterface, ...children: CoponentChildrenType[]) {
+    return ll.h3(context, ...children);
+}
+export function h4(context: ComponentContextInterface, ...children: CoponentChildrenType[]) {
+    return ll.h4(context, ...children);
+}
+export function h5(context: ComponentContextInterface, ...children: CoponentChildrenType[]) {
+    return ll.h5(context, ...children);
+}
+export function h6(context: ComponentContextInterface, ...children: CoponentChildrenType[]) {
+    return ll.h6(context, ...children);
+}
+
+export function table(context: ComponentContextInterface, ...children: CoponentChildrenType[]) {
+    return ll.table(context, ...children);
+}
+export function thead(context: ComponentContextInterface, ...children: CoponentChildrenType[]) {
+    return ll.thead(context, ...children);
+}
+export function tbody(context: ComponentContextInterface, ...children: CoponentChildrenType[]) {
+    return ll.tbody(context, ...children);
+}
+export function th(context: ComponentContextInterface, ...children: CoponentChildrenType[]) {
+    return ll.th(context, ...children);
+}
+export function td(context: ComponentContextInterface, ...children: CoponentChildrenType[]) {
+    return ll.td(context, ...children);
+}
+export function tr(context: ComponentContextInterface, ...children: CoponentChildrenType[]) {
+    return ll.tr(context, ...children);
+}
 export function p(context: ComponentContextInterface, ...children: CoponentChildrenType[]) {
-    return uui.p(context, ...children);
+    return ll.p(context, ...children);
 }
 export function button(context: ComponentContextInterface) {
-    return uui.button(context);
+    return ll.button(context);
 }
 
 export function select(context: ComponentContextInterface & { options: { text: string, value: any }[], value: any }) {
-    return uui.select(context);
+    return ll.select(context);
 }
 
 export function iframe(context: ComponentContextInterface, ...children: CoponentChildrenType[]) {
-    return uui.iframe(context, ...children)
+    return ll.iframe(context, ...children)
 }
 export function list<TData>(context: { data: TData[], component: (data: TData) => (Component | Component[]) }) {
-    return uui.list(context);
+    return ll.list(context);
 }
 export function mount(element: HTMLElement, ...children: CoponentChildrenType[]) {
-    return uui.mount(element, ...children);
+    return ll.mount(element, ...children);
 }
 
 export function useStore<T>(data: T): T {
-    return uui.useStore(data);
+    return ll.useStore(data);
 }
-export function updateUii() {
-    return uui.updateUii();
+export function updateN() {
+    return ll.updateN();
 }

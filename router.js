@@ -1,4 +1,4 @@
-import { updateUii } from ".";
+import { updateN } from ".";
 
 let handlers = {};
 let currentHandler = null;
@@ -26,7 +26,7 @@ window.addEventListener("popstate", function (e) {
         if (currentHandler) {
             if (currentHandler.onenter) {
                 currentHandler.onenter(e.state.enterState);
-                updateUii();
+                updateN();
             }
 
             return;
@@ -34,7 +34,7 @@ window.addEventListener("popstate", function (e) {
     }
 
     fallbackHandler(e.state);
-    updateUii();
+    updateN();
 });
 
 function cloneState(source) {

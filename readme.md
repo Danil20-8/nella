@@ -8,12 +8,16 @@
 - Tracks store functions call changes and array changes
 - Provides component pools
 ---
+## Installing
+```sh
+npm install nella
+```
 ## Hello World!
 
 the simplest application
 
 ```js
-import { mount, div } from "../../uii";
+import { mount, div } from "nella";
 
 mount(document.body,
     div({ innerText: "Hello World!" })
@@ -23,7 +27,7 @@ mount(document.body,
 now we are using store and adding little interactive
 
 ```js
-import { useStore, mount, div, switchComponent, button} from "../../uii";
+import { useStore, mount, div, switchComponent, button} from "nella";
 
 let store = useStore({
   hello: false
@@ -44,8 +48,6 @@ mount(document.body, [
 ## More examples
 
  #### The latest features example [withUii.js](./examples/src/withUii.js)
-
-Another examples are obsolet, but they may contain more features wich are not stable yet or removed in last version
 
 To build examples go to ./examples directore and run
 
@@ -75,16 +77,15 @@ or just open "index.html" file
 
 ### Overview
 
-#### [Framework core](./uii.js)
+#### [Framework core](./index.js)
 
 - here is the main code
-- this is a "fork" of the [first version of the framework](./index.js). Old version doesn't supports store and has another update mechanism which is not good enough
 
 #### [Store](./shotcard.js)
 
 - here is the store features. Technically it is independent library
 
-#### [TypeScript](./types/uii.ts)
+#### [TypeScript](./index.d.ts)
 
 - here is typescript bindings
 
