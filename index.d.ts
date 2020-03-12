@@ -1,9 +1,9 @@
 export interface ComponentContextInterface {
-    innerText?: string | (() => string)
-    title?: string | (() => string)
-    innerHTML?: string | (() => string)
-    style?: CSSStyleDeclaration | (() => CSSStyleDeclaration)
-    value?: string | (() => string)
+    innerText?: any | (() => any)
+    title?: any | (() => any)
+    innerHTML?: any | (() => any)
+    style?: string | (() => string)
+    value?: any | (() => any)
     className?: string | (() => string)
     checked?: boolean | (() => boolean)
     lang?: string | (() => string)
@@ -327,7 +327,7 @@ export function button(context: ComponentContextInterface): Component<ComponentC
 export function select(context: ComponentContextInterface & { options: { text: string | (() => string), value: any | (() => any) }[], value: any | (() => any) }): Component<any>;
 
 export function iframe(context: ComponentContextInterface, ...children: ComponentChildrenType[]): Component<ComponentContextInterface>;
-type ListContext<TData> = { data: TData | (() => TData)[], component: (data: TData | (() => TData)) => ComponentChildrenType };
+type ListContext<TData> = { data: TData[] | (() => TData[]), component: (data: TData) => ComponentChildrenType };
 export function list<TData>(context: ListContext<TData>): Component<ListContext<TData>>;
 export function poolList<TData>(context: ListContext<TData>): Component<ListContext<TData>>;
 export function mount(element: HTMLElement | (() => HTMLElement), ...children: ComponentChildrenType[]): void;
@@ -337,7 +337,7 @@ export function poolSwitch(context: SwitchComponentContext): Component<SwitchCom
 export function useStore<T>(data: T): T;
 export function updateN(): void;
 export class NTarget {
-    constructor(actions: ((() => void) | { tracking: () => any, postaction: (any) => void, continuousTracking: boolean })[]);
+    constructor(actions: ((() => void) | { tracking: () => any, postaction?: (any) => void, continuousTracking?: boolean })[]);
 
     track(): void;
     untrack(): void;
