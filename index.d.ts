@@ -284,12 +284,12 @@ export interface ComponentContextInterface {
 
 type ComponentChildrenType =
     Component<any> |
-    (() => Component<any>) |
-    (Component<any> | (() => Component<any>))[];
+    (() => ComponentChildrenType) |
+    (ComponentChildrenType | (() => ComponentChildrenType))[];
 export class Component<TContext>{
     context: TContext
 
-    constructor(context: TContext, element?: string | HTMLElement, children?: ComponentChildrenType);
+    constructor(context?: TContext, element?: string | HTMLElement, children?: ComponentChildrenType);
     awake(context: TContext): void;
     start(): void;
     stop(): void;
@@ -331,9 +331,9 @@ type ListContext<TData> = { data: TData[] | (() => TData[]), component: (data: T
 export function list<TData>(context: ListContext<TData>): Component<ListContext<TData>>;
 export function poolList<TData>(context: ListContext<TData>): Component<ListContext<TData>>;
 export function mount(element: HTMLElement | (() => HTMLElement), ...children: ComponentChildrenType[]): void;
-type SwitchComponentContext = { active: boolean | (() => boolean), component: () => ComponentChildrenType }
-export function switchComponent(context: SwitchComponentContext): Component<SwitchComponentContext>;
-export function poolSwitch(context: SwitchComponentContext): Component<SwitchComponentContext>;
+type SwitchComponentItem = { active: boolean | (() => boolean), component: () => ComponentChildrenType }
+export function switchComponent(...items: SwitchComponentItem[]): Component<any>;
+export function poolSwitch(...items: SwitchComponentItem[]): Component<any>;
 export function useStore<T>(data: T): T;
 export function updateN(): void;
 export class NTarget {
