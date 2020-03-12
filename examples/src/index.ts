@@ -1,5 +1,4 @@
 import { mount, div, Component, inputText, useStore } from "../../";
-
 class AppComponent extends Component<{ name: string }>{
     component({ name }) {
         return [
@@ -13,7 +12,7 @@ class AppComponent extends Component<{ name: string }>{
 let store = useStore({
     name: "World"
 })
-let e: HTMLHtmlElement;
+
 mount(
     document.body,
     new AppComponent({

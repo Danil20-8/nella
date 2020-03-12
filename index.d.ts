@@ -1,5 +1,3 @@
-import * as ll from "./index.js"
-
 export interface ComponentContextInterface {
     innerText?: string | (() => string)
     title?: string | (() => string)
@@ -284,120 +282,63 @@ export interface ComponentContextInterface {
     onwheel?: ((this: GlobalEventHandlers | (() => GlobalEventHandlers), ev: WheelEvent) => any) | null;
 }
 
-type CoponentChildrenType = ll.Component | (() => ll.Component);
+type ComponentChildrenType =
+    Component<any> |
+    (() => Component<any>) |
+    (Component<any> | (() => Component<any>))[];
+export class Component<TContext>{
+    context: TContext
 
-export class Component<TContext> extends ll.Component {
-    constructor(context: TContext, element?: string | HTMLElement, children?: CoponentChildrenType | (() => CoponentChildrenType)[]) {
-        super(context, element, children);
-    }
-    awake(context: TContext) {
-        return super.awake(context);
-    }
-    start(): void | (() => void) {
-        return super.start();
-    }
-    stop(): void | (() => void) {
-        return super.stop();
-    }
-    component(context: TContext)
-    {
-        return super.component(context);
-    }
+    constructor(context: TContext, element?: string | HTMLElement, children?: ComponentChildrenType);
+    awake(context: TContext): void;
+    start(): void;
+    stop(): void;
+    component(context: any): ComponentChildrenType;
 }
+export function div(context: ComponentContextInterface, ...children: ComponentChildrenType[]): Component<ComponentContextInterface>;
 
-export function div(context: ComponentContextInterface | (() => ComponentContextInterface), ...children: CoponentChildrenType | (() => CoponentChildrenType)[]) {
-    return ll.div(context, ...children);
-}
-export function span(context: ComponentContextInterface | (() => ComponentContextInterface), ...children: CoponentChildrenType | (() => CoponentChildrenType)[]) {
-    return ll.span(context, ...children);
-}
-export function img(context: ComponentContextInterface | (() => ComponentContextInterface)) {
-    return ll.img(context);
-}
-export function form(context: ComponentContextInterface | (() => ComponentContextInterface), ...children: CoponentChildrenType | (() => CoponentChildrenType)[]) {
-    return ll.form(context, ...children);
-}
-export function inputText(context: ComponentContextInterface | (() => ComponentContextInterface)) {
-    return ll.inputText(context);
-}
-export function inputSubmit(context: ComponentContextInterface | (() => ComponentContextInterface)) {
-    return ll.inputSubmit(context);
-}
-export function checkbox(context: ComponentContextInterface | (() => ComponentContextInterface)) {
-    return ll.checkbox(context);
-}
-export function radio(context: ComponentContextInterface | (() => ComponentContextInterface)) {
-    return ll.radio(context);
-}
-export function label(context: ComponentContextInterface | (() => ComponentContextInterface), ...children: CoponentChildrenType | (() => CoponentChildrenType)[]) {
-    return ll.label(context, ...children)
-}
-export function a(context: ComponentContextInterface | (() => ComponentContextInterface), ...children: CoponentChildrenType | (() => CoponentChildrenType)[]) {
-    return ll.a(context, ...children);
-}
+export function span(context: ComponentContextInterface, ...children: ComponentChildrenType[]): Component<ComponentContextInterface>;
+export function img(context: ComponentContextInterface): Component<ComponentContextInterface>;
+export function form(context: ComponentContextInterface, ...children: ComponentChildrenType[]): Component<ComponentContextInterface>;
+export function inputText(context: ComponentContextInterface): Component<ComponentContextInterface>;
+export function inputSubmit(context: ComponentContextInterface): Component<ComponentContextInterface>;
+export function checkbox(context: ComponentContextInterface): Component<ComponentContextInterface>;
+export function radio(context: ComponentContextInterface): Component<ComponentContextInterface>;
+export function label(context: ComponentContextInterface, ...children: ComponentChildrenType[]): Component<ComponentContextInterface>;
+export function a(context: ComponentContextInterface, ...children: ComponentChildrenType[]): Component<ComponentContextInterface>;
 
-export function h1(context: ComponentContextInterface | (() => ComponentContextInterface), ...children: CoponentChildrenType | (() => CoponentChildrenType)[]) {
-    return ll.h1(context, ...children);
-}
+export function h1(context: ComponentContextInterface, ...children: ComponentChildrenType[]): Component<ComponentContextInterface>;
 
-export function h2(context: ComponentContextInterface | (() => ComponentContextInterface), ...children: CoponentChildrenType | (() => CoponentChildrenType)[]) {
-    return ll.h2(context, ...children);
-}
-export function h3(context: ComponentContextInterface | (() => ComponentContextInterface), ...children: CoponentChildrenType | (() => CoponentChildrenType)[]) {
-    return ll.h3(context, ...children);
-}
-export function h4(context: ComponentContextInterface | (() => ComponentContextInterface), ...children: CoponentChildrenType | (() => CoponentChildrenType)[]) {
-    return ll.h4(context, ...children);
-}
-export function h5(context: ComponentContextInterface | (() => ComponentContextInterface), ...children: CoponentChildrenType | (() => CoponentChildrenType)[]) {
-    return ll.h5(context, ...children);
-}
-export function h6(context: ComponentContextInterface | (() => ComponentContextInterface), ...children: CoponentChildrenType | (() => CoponentChildrenType)[]) {
-    return ll.h6(context, ...children);
-}
+export function h2(context: ComponentContextInterface, ...children: ComponentChildrenType[]): Component<ComponentContextInterface>;
+export function h3(context: ComponentContextInterface, ...children: ComponentChildrenType[]): Component<ComponentContextInterface>;
+export function h4(context: ComponentContextInterface, ...children: ComponentChildrenType[]): Component<ComponentContextInterface>;
+export function h5(context: ComponentContextInterface, ...children: ComponentChildrenType[]): Component<ComponentContextInterface>;
+export function h6(context: ComponentContextInterface, ...children: ComponentChildrenType[]): Component<ComponentContextInterface>;
 
-export function table(context: ComponentContextInterface | (() => ComponentContextInterface), ...children: CoponentChildrenType | (() => CoponentChildrenType)[]) {
-    return ll.table(context, ...children);
-}
-export function thead(context: ComponentContextInterface | (() => ComponentContextInterface), ...children: CoponentChildrenType | (() => CoponentChildrenType)[]) {
-    return ll.thead(context, ...children);
-}
-export function tbody(context: ComponentContextInterface | (() => ComponentContextInterface), ...children: CoponentChildrenType | (() => CoponentChildrenType)[]) {
-    return ll.tbody(context, ...children);
-}
-export function th(context: ComponentContextInterface | (() => ComponentContextInterface), ...children: CoponentChildrenType | (() => CoponentChildrenType)[]) {
-    return ll.th(context, ...children);
-}
-export function td(context: ComponentContextInterface | (() => ComponentContextInterface), ...children: CoponentChildrenType | (() => CoponentChildrenType)[]) {
-    return ll.td(context, ...children);
-}
-export function tr(context: ComponentContextInterface | (() => ComponentContextInterface), ...children: CoponentChildrenType | (() => CoponentChildrenType)[]) {
-    return ll.tr(context, ...children);
-}
-export function p(context: ComponentContextInterface | (() => ComponentContextInterface), ...children: CoponentChildrenType | (() => CoponentChildrenType)[]) {
-    return ll.p(context, ...children);
-}
-export function button(context: ComponentContextInterface | (() => ComponentContextInterface)) {
-    return ll.button(context);
-}
+export function table(context: ComponentContextInterface, ...children: ComponentChildrenType[]): Component<ComponentContextInterface>;
+export function thead(context: ComponentContextInterface, ...children: ComponentChildrenType[]): Component<ComponentContextInterface>;
+export function tbody(context: ComponentContextInterface, ...children: ComponentChildrenType[]): Component<ComponentContextInterface>;
+export function th(context: ComponentContextInterface, ...children: ComponentChildrenType[]): Component<ComponentContextInterface>;
+export function td(context: ComponentContextInterface, ...children: ComponentChildrenType[]): Component<ComponentContextInterface>;
+export function tr(context: ComponentContextInterface, ...children: ComponentChildrenType[]): Component<ComponentContextInterface>;
+export function p(context: ComponentContextInterface, ...children: ComponentChildrenType[]): Component<ComponentContextInterface>;
+export function button(context: ComponentContextInterface): Component<ComponentContextInterface>;
 
-export function select(context: ComponentContextInterface | (() => ComponentContextInterface) & { options: { text: string | (() => string), value: any | (() => any) }[], value: any | (() => any) }) {
-    return ll.select(context);
-}
+export function select(context: ComponentContextInterface & { options: { text: string | (() => string), value: any | (() => any) }[], value: any | (() => any) }): Component<any>;
 
-export function iframe(context: ComponentContextInterface | (() => ComponentContextInterface), ...children: CoponentChildrenType | (() => CoponentChildrenType)[]) {
-    return ll.iframe(context, ...children)
-}
-export function list<TData>(context: { data: TData | (() => TData)[], component: (data: TData | (() => TData)) => (Component | Component[]) }) {
-    return ll.list(context);
-}
-export function mount(element: HTMLElement | (() => HTMLElement), ...children: CoponentChildrenType | (() => CoponentChildrenType)[]) {
-    return ll.mount(element, ...children);
-}
+export function iframe(context: ComponentContextInterface, ...children: ComponentChildrenType[]): Component<ComponentContextInterface>;
+type ListContext<TData> = { data: TData | (() => TData)[], component: (data: TData | (() => TData)) => ComponentChildrenType };
+export function list<TData>(context: ListContext<TData>): Component<ListContext<TData>>;
+export function poolList<TData>(context: ListContext<TData>): Component<ListContext<TData>>;
+export function mount(element: HTMLElement | (() => HTMLElement), ...children: ComponentChildrenType[]): void;
+type SwitchComponentContext = { active: boolean | (() => boolean), component: () => ComponentChildrenType }
+export function switchComponent(context: SwitchComponentContext): Component<SwitchComponentContext>;
+export function poolSwitch(context: SwitchComponentContext): Component<SwitchComponentContext>;
+export function useStore<T>(data: T): T;
+export function updateN(): void;
+export class NTarget {
+    constructor(actions: ((() => void) | { tracking: () => any, postaction: (any) => void, continuousTracking: boolean })[]);
 
-export function useStore<T>(data: T): T {
-    return ll.useStore(data);
-}
-export function updateN() {
-    return ll.updateN();
+    track(): void;
+    untrack(): void;
 }

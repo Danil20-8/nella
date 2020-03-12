@@ -7,6 +7,9 @@
 - Supports unlimited store amount including local states
 - Tracks store functions call changes and array changes
 - Provides component pools
+
+Nella uses Proxy for its store so it works only on modern browsers: Firefox, Chrome, Edge...
+
 ---
 ## Installing
 ```sh
@@ -47,7 +50,7 @@ mount(document.body, [
 
 ## More examples
 
- #### The latest features example [withUii.js](./examples/src/withUii.js)
+The latest features example [withUii.js](./examples/src/withUii.js)
 
 To build examples go to ./examples directore and run
 
@@ -63,35 +66,6 @@ python -m SimpleHTTPServer 9000
 
 and open "http://localhost:9000" in browser
 or just open "index.html" file
-
----
-## Contribution
-
-### What can I do?
-
-- Implement missing html components.
-- Implement missing typescript bindings.
-- Improve router. I want to make it is like application navigation system and let "back" action for each componet, using routes or not. For example it may allow closing popup or menu on back button, I think it could be great for mobile version.
-- Impove infrastructure. Make build utilites for example.
-- Make more examples! Any things, components, applications you like!
-
-### Overview
-
-#### [Framework core](./index.js)
-
-- here is the main code
-
-#### [Store](./shotcard.js)
-
-- here is the store features. Technically it is independent library
-
-#### [TypeScript](./index.d.ts)
-
-- here is typescript bindings
-
-#### [Router](./router.js)
-
-- here is router
 
 ---
 

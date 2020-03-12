@@ -1,4 +1,4 @@
-import { updateN } from ".";
+import { updateN } from "../";
 
 let handlers = {};
 let currentHandler = null;
