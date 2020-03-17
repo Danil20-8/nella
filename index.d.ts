@@ -342,3 +342,6 @@ export class NTarget {
     track(): void;
     untrack(): void;
 }
+
+export function val<T>(value: T | (() => T)): T;
+export function isDefined(value: any): boolean;

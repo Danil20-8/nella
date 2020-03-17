@@ -110,6 +110,9 @@ export function val(value) {
         value;
     return r && r.valueOf();
 }
+export function isDefined(value) {
+    return value !== undefined && value.valueOf() !== undefined;
+}
 
 function remove(component) {
     if (component.remove instanceof Function) {
