@@ -51,20 +51,25 @@ export function restore(store, state) {
 let sessionId = Date.now();
 
 let handlers = {};
+export function useRouteHandler(routeHandler) {
+    handlers[routeHandler.routeKey] = routeHandler;
+}
+export function dropRouteHandler(routeHandler) {
+    delete handlers[routeHandler.routeKey];
+}
+let foreignState = null;
 /**
  * @type {{ handler, enterState }[]}
  */
 let trail = [];
 let trailHead = -1;
 
-let routerKeyIncrement = 0;
-
 /**
  * @type { ({ type: "pop", anchor: number, location: { pathname: string. search: string, hash: string}, state: { key: number, index: number, anchor: number, enterState: any } | { type: "push", state: any, url: string, handler: { onenter: (state) => void, onpushEnter: (state) => void, onpopEnter: (state) => void, onexit: () => void, onpushExit: () => void, onpopExit: () => void } })[] }
  */
 let queue = [];
 
-export class NRouter {
+class NRouter {
     constructor() {
         this.pathname = location.pathname;
         this.search = location.search;
@@ -86,8 +91,8 @@ export class NRouter {
         return;
     }
     popState(anchor) {
-        if (anchor !== undefined)
-            history.go(anchor - trailHead - 1);
+        if (anchor !== undefined && anchor.valueOf() !== undefined)
+            history.go(anchor.valueOf() - trailHead - 1);
         else
             history.back();
     }
@@ -133,7 +138,7 @@ function processQueue() {
     processing = false;
 }
 /**
- * @param { { state: any, url: string, handler: { onenter: (state) => void, onpushEnter: (state) => void, onpopEnter: (state) => void, onexit: () => void, onpushExit: () => void, onpopExit: () => void } } }
+ * @param { { state: any, url: string, handler: { routeKey: string, onenter: (state) => void, onpushEnter: (state) => void, onpopEnter: (state) => void, onexit: () => void, onpushExit: () => void, onpopExit: () => void } } }
  */
 function processPush({ state, url, handler }) {
     if (trailHead > -1) {
@@ -145,14 +150,11 @@ function processPush({ state, url, handler }) {
             else if (isDefined(handler.onpushExit))
                 handler.onpushExit();
         }
+    } else if (foreignState !== null) {
+        let handler = handlers[foreignState.routeKey];
+        pushExit(handler);
+        foreignState = null;
     }
-
-    let handlerKey = isDefined(handler.__routerKey) && handler.__routerKey.valueOf();
-    if (!handlerKey) {
-        handler.__routerKey = handlerKey = (++routerKeyIncrement).toString();
-    }
-
-    handlers[handlerKey] = handler;
 
     let enterState = cloneState(state);
     trail[++trailHead] = { handler, enterState };
@@ -161,9 +163,9 @@ function processPush({ state, url, handler }) {
     history.pushState(
         {
             sessionId,
-            key: handlerKey,
             anchor: trailHead,
-            enterState
+            enterState,
+            routeKey: handler.routeKey && handler.routeKey.valueOf()
         },
         "router",
         url);
@@ -184,24 +186,52 @@ function processPop({ location, state }) {
     router.search = location.search;
     router.hash = location.hash;
 
-    let anchor = state.sessionId === sessionId && isDefined(state.anchor) ? state.anchor : -1;
+    let foreign = state && state.sessionId !== sessionId;
+
+    let anchor = !foreign && state && isDefined(state.anchor) ? state.anchor : -1;
     let direction = anchor - trailHead;
+
+    if (foreignState !== null) {
+        let handler = handlers[foreignState.routeKey];
+        if (foreign) {
+            let direction = foreignState.sessionId === state.sessionId ?
+                state.anchor - foreignState.anchor :
+                state.sessionId - foreignState.sessionId;
+
+            if (direction > 0) {
+                pushExit(handler, foreignState.enterState);
+            }
+            else if (direction < 0) {
+                popExit(handler);
+            }
+            foreignState = null;
+
+            let newHandler = handlers[state.routeKey];
+            if (newHandler) {
+                if (direction > 0) {
+                    pushEnter(newHandler, state.enterState);
+                }
+                else if (direction < 0) {
+                    popEnter(newHandler, state.enterState);
+                }
+                foreignState = state;
+            }
+        }
+        else {
+            pushExit(handler);
+            foreignState = null;
+        }
+    }
 
     if (direction > 0) {
         for (let i = trailHead; i < anchor; ++i) {
             if (i > -1) {
                 let { handler } = trail[i];
-                if (isDefined(handler.onexit))
-                    handler.onexit();
-                else if (isDefined(handler.onpushExit))
-                    handler.onpushExit();
+                pushExit(handler);
             }
             if (i < trail.length - 1) {
                 let { handler, enterState } = trail[i + 1];
-                if (isDefined(handler.onenter))
-                    handler.onenter(enterState, i + 1);
-                else if (isDefined(handler.onpushEnter))
-                    handler.onpushEnter(enterState, i + 1);
+                pushEnter(handler, enterState, i + 1);
             }
         }
     }
@@ -209,19 +239,81 @@ function processPop({ location, state }) {
         for (let i = trailHead; i > anchor; --i) {
             {
                 let { handler } = trail[i];
-                if (isDefined(handler.onexit))
-                    handler.onexit();
-                else if (isDefined(handler.onpopExit))
-                    handler.onpopExit();
+                popExit(handler);
             }
             if (i > 0) {
                 let { handler, enterState } = trail[i - 1];
-                if (isDefined(handler.onenter))
-                    handler.onenter(enterState, i - 1);
-                else if (isDefined(handler.onpopEnter))
-                    handler.onpopEnter(enterState, i - 1);
+                popEnter(handler, enterState, i - 1);
             }
         }
     }
+    
     trailHead = anchor;
+
+    if (foreign && foreignState === null && state.routeKey) {
+        let handler = handlers[state.routeKey];
+        if (handler) {
+            foreignState = state;
+            popEnter(handler, state.enterState, -1);
+        }
+    }
+}
+
+function pushEnter(handler, enterState, anchor) {
+    if (isDefined(handler.onenter))
+        handler.onenter(enterState, anchor);
+    else if (isDefined(handler.onpushEnter))
+        handler.onpushEnter(enterState, anchor);
+}
+function popEnter(handler, enterState, anchor) {
+    if (isDefined(handler.onenter))
+        handler.onenter(enterState, anchor);
+    else if (isDefined(handler.onpopEnter))
+        handler.onpopEnter(enterState, anchor);
+}
+function pushExit(handler) {
+    if (isDefined(handler.onexit))
+        handler.onexit();
+    else if (isDefined(handler.onpushExit))
+        handler.onpushExit();
+}
+function popExit(handler) {
+    if (isDefined(handler.onexit))
+        handler.onexit();
+    else if (isDefined(handler.onpopExit))
+        handler.onpopExit();
+}
+
+export class NRoute {
+    constructor(handler, routeKey) {
+        this.anchor = null;
+        this.handler = handler;
+        this.routeKey = routeKey || handler.routeKey;
+
+        if (this.routeKey)
+            useRouteHandler(this);
+    }
+
+    onpushEnter(state, anchor) {
+        pushEnter(this.handler, state);
+        this.anchor = anchor;
+    }
+    onpopEnter(state, anchor) {
+        popEnter(this.handler, state);
+        this.anchor = anchor;
+    }
+
+    onpushExit() {
+        pushExit(this.handler);
+    }
+    onpopExit() {
+        popExit(this.handler);
+    }
+
+    pushState(state, url) {
+        router.pushState(state, url, this);
+    }
+    popState() {
+        router.popState(this.anchor);
+    }
 }

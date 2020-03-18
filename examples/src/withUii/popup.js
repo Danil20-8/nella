@@ -1,36 +1,35 @@
 import { useStore, poolSwitch, poolList, div, button, isDefined } from "../../..";
-import { router } from "../../../router";
+import { NRoute } from "../../../router";
+
+const route = new NRoute({
+    onpushEnter: function () {
+        if (popupStore.queue.length.valueOf() === 0)
+            route.popState();
+    },
+    onpopEnter() {
+        popupStore.queue.shift();
+        if (popupStore.queue.length.valueOf() > 0) {
+            route.pushState(null, null);
+        }
+    }
+}, "popup");
 
 class PopupStore {
     constructor() {
         this.queue = [];
-        this.__anchor = null;
     }
 
     pushPopup(item) {
         this.queue.push(item);
 
         if (this.queue.length.valueOf() === 1)
-            router.pushState(null, null, this);
+            route.pushState(null, null);
     }
-    closePopup() { router.popState(this.__anchor); }
-    onpushEnter(state, anchor) {
-        if (this.queue.length.valueOf() === 0)
-            router.popState();
-        else
-            this.__anchor = anchor;
-    }
-    onpopExit() {
-        this.queue.shift();
-        console.log("exit!!!");
-        if (this.queue.length.valueOf() > 0) {
-            console.log("pushing!");
-            router.pushState(null, null, this);
-        }
-    }
+    closePopup() { route.popState(); }
 }
 
 export const popupStore = useStore(new PopupStore());
+
 
 export function popup() {
     return poolList({
