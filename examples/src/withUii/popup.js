@@ -4,6 +4,7 @@ import { router } from "../../../router";
 class PopupStore {
     constructor() {
         this.queue = [];
+        this.__anchor = null;
     }
 
     pushPopup(item) {
@@ -12,10 +13,12 @@ class PopupStore {
         if (this.queue.length.valueOf() === 1)
             router.pushState(null, null, this);
     }
-    closePopup() { router.popState(); }
-    onpushEnter() {
+    closePopup() { router.popState(this.__anchor); }
+    onpushEnter(state, anchor) {
         if (this.queue.length.valueOf() === 0)
             router.popState();
+        else
+            this.__anchor = anchor;
     }
     onpopExit() {
         this.queue.shift();
