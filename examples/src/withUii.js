@@ -1,12 +1,12 @@
 import { div, mount, switchComponent, inputText, button, list, poolList, useStore, poolSwitch, label, p, NTarget } from "../..";
 import { popState, router } from "../../router";
-import { popup, popupStore } from "./withUii/popup";
+import { popup } from "./withUii/popup";
 import { expirienceComponent } from "./withUii/expirienceComponent";
-import { menuComponent } from "./withUii/menu";
 import { resumeRoute } from "./withUii/routes/resumeRoute";
 import { contentRoute } from "./withUii/routes/contentRoute";
 import { homeRoute } from "./withUii/routes/homeRoute";
 import { store } from "./withUii/store";
+import { Menu } from "./withUii/menu";
 
 // Experimental: popup on first history entry move back to confirm page exit
 /*pushState(null, null, {
@@ -39,16 +39,15 @@ new NTarget([
         continuousTracking: true
     }*/
     {
-        tracking: () => console.log("queue length:",popupStore.queue.length.valueOf())
+        tracking: () => console.log("queue length:", popup.store.queue.length.valueOf())
     }
 ]).track();
 
 // Application entry point
 mount(document.body,
-
     // html body content
-    popup(),
-    menuComponent({
+    popup.component(),
+    new Menu().component({
         title: "Menu", options: [
             {
                 title: "home", trigger: homeRoute.pushRoute
@@ -61,7 +60,7 @@ mount(document.body,
             }
         ]
     }),
-    button({ innerText: "boo!", onclick: () => popupStore.pushPopup({ message: "be scaring!" }) }),
+    button({ innerText: "boo!", onclick: () => popup.push({ message: "be scaring!" }) }),
     div({
         // component will update its attributes when store property changed
         innerText: store.name

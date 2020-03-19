@@ -1,16 +1,28 @@
-import { poolSwitch, div, span, useStore, list, button, Component, th } from "../../..";
+import { poolSwitch, div, span, useStore, list, button} from "../../..";
 import { NRoute } from "../../../router";
 
-class MenuComponent extends Component {
-    awake() {
-        this.state = this.state || useStore({
+class MenuRoute extends NRoute {
+    constructor(menu, key) {
+        super((key || "") + "menu");
+
+        this.menu = menu;
+    }
+    handleEnter() {
+        this.menu.state.active = true;
+    }
+    handleExit() {
+        this.menu.state.active = false;
+    }
+}
+
+export class Menu{
+    constructor(routeKey) {
+        this.route = new MenuRoute(this, routeKey);
+        this.state = useStore({
             active: false
         });
-
-        this.route = this.route || new NRoute(this, "menu");
     }
     component({ title, options }) {
-
         return div({
             style: "position: relative;"
         },
@@ -28,12 +40,6 @@ class MenuComponent extends Component {
                 }
             )
         )
-    }
-    onenter() {
-        this.state.active = true;
-    }
-    onexit() {
-        this.state.active = false;
     }
 }
 
@@ -65,5 +71,3 @@ function body({ options }) {
         })
     );
 }
-
-export function menuComponent(context) { return new MenuComponent(context); }

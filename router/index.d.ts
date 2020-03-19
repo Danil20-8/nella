@@ -27,10 +27,24 @@ declare class NRouter {
 export const router: NRouter;
 
 declare class NRoute<TState>{
-    constructor(handler: NRouteHanadler<TState>, routeKey: string);
+    constructor(routeKey?: string);
+
+    routeKey?: string;
+
+    onpushEnter(state: TState, anchor: any): void;
+    onpopEnter(state: TState, anchor: any): void;
+    onpushExit(): void;
+    onpopExit(): void;
 
     pushState<TState>(state: TState, url: string);
     popState();
+
+    handleEnter(state: TState): void;
+    handlePushEnter(state: TState): void;
+    handlePopEnter(state: TState): void;
+    handleExit(): void;
+    handlePushExit(): void;
+    handlePopExit(): void;
 }
 
 export function useRouteHandler<TState>(handler: NRouteHanadler<TState>);

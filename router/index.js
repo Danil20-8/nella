@@ -247,7 +247,7 @@ function processPop({ location, state }) {
             }
         }
     }
-    
+
     trailHead = anchor;
 
     if (foreign && foreignState === null && state.routeKey) {
@@ -285,29 +285,34 @@ function popExit(handler) {
 }
 
 export class NRoute {
-    constructor(handler, routeKey) {
+    constructor(routeKey) {
         this.anchor = null;
-        this.handler = handler;
-        this.routeKey = routeKey || handler.routeKey;
+        this.routeKey = routeKey;
 
         if (this.routeKey)
             useRouteHandler(this);
     }
 
     onpushEnter(state, anchor) {
-        pushEnter(this.handler, state);
+        this.handleEnter(state);
+        this.handlePopEnter(state);
+
         this.anchor = anchor;
     }
     onpopEnter(state, anchor) {
-        popEnter(this.handler, state);
+        this.handleEnter(state);
+        this.handlePopEnter(state);
+
         this.anchor = anchor;
     }
 
     onpushExit() {
-        pushExit(this.handler);
+        this.handleExit();
+        this.handlePushExit();
     }
     onpopExit() {
-        popExit(this.handler);
+        this.handleExit();
+        this.handlePopExit();
     }
 
     pushState(state, url) {
@@ -316,4 +321,11 @@ export class NRoute {
     popState() {
         router.popState(this.anchor);
     }
+
+    handleEnter(state) { }
+    handlePushEnter(state) { }
+    handlePopEnter(state) { }
+    handleExit() { }
+    handlePushExit() { }
+    handlePopExit() { }
 }
