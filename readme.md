@@ -12,20 +12,20 @@ is a framework for building UI for web applications
 
 ## Get ready
 
-### install
+install
 
 ```sh
 npm install nella
 ```
 
-### import nella
+import nella
 
 ```js
 import { useStore, mount, div, switchComponent, button } from "nella";
 ...
 ```
 
-### add store
+add store
 
 ```js
 const store = useStore({
@@ -34,14 +34,14 @@ const store = useStore({
 ...
 ```
 
-### mount entry point
+mount entry point
 
 ```js
 
 mount(document.body, ...
 ```
 
-### add components
+add components
 
 ```js
 [
@@ -56,7 +56,7 @@ mount(document.body, ...
 ]...
 ```
 
-### done!
+done!
 
 ```js
 import { useStore, mount, div, switchComponent, button } from "nella";
