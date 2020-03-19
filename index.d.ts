@@ -336,6 +336,7 @@ export function switchComponent(...items: SwitchComponentItem[]): Component<any>
 export function poolSwitch(...items: SwitchComponentItem[]): Component<any>;
 export function useStore<T>(data: T): T;
 export function updateN(): void;
+export class NStore{}
 export class NTarget {
     constructor(actions: ((() => void) | { tracking: () => any, postaction?: (any) => void, continuousTracking?: boolean })[]);
 

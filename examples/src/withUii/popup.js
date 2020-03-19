@@ -1,8 +1,9 @@
-import { useStore, poolSwitch, poolList, div, button, isDefined } from "../../..";
+import { poolSwitch, poolList, div, button, isDefined, NStore } from "../../..";
 import { NRoute } from "../../../router";
 
-class PopupStore {
+class PopupStore extends NStore{
     constructor() {
+        super();
         this.queue = [];
     }
 }
@@ -30,7 +31,7 @@ export class Popup {
     constructor(routeKey) {
         this.route = new PopupRoute(this, routeKey)
 
-        this.store = useStore(new PopupStore());
+        this.store = new PopupStore();
     }
 
     push(item) {

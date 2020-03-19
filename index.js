@@ -511,7 +511,7 @@ export function switchComponent(...items) {
  */
 export function poolSwitch(...items) {
     return switchComponent(
-        ...items.map(i => { return { active: i.active, component: usePoolComponent(i.component) }; })
+        ...items.map(i => { return { active: i.active, component: usePoolComponent(i.component.bind(i)) }; })
     )
 }
 let __listComponentKeyIncrement = 0;
@@ -782,7 +782,7 @@ export function list(context) {
  * @param {{ data: T[], component: (pool: { context: T }) => Component}} context 
  */
 export function poolList(context) {
-    let pool = new ComponentPool(context.component);
+    let pool = new ComponentPool(context.component.bind(context));
     return list({
         data: context.data,
         component: (data) => pool.pop(data)
@@ -810,7 +810,11 @@ export class NTarget extends Target {
 export function useStore(data) {
     return new Property(store, data).__proxy;
 }
-
+export class NStore{
+    constructor() {
+        return useStore(this);
+    }
+}
 export function updateN() {
     store.shot();
 }
