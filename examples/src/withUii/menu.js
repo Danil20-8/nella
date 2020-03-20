@@ -7,6 +7,7 @@ class MenuRoute extends NRoute {
 
         this.menu = menu;
     }
+
     handleEnter() {
         this.menu.state.active = true;
     }

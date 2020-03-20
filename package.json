@@ -24,5 +24,8 @@
   "bugs": {
     "url": "https://github.com/Danil20-8/nella/issues"
   },
-  "homepage": "https://github.com/Danil20-8/nella#readme"
+  "homepage": "https://github.com/Danil20-8/nella#readme",
+  "devDependencies": {
+    "@types/route-parser": "^0.1.3"
+  }
 }

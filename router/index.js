@@ -112,26 +112,26 @@ window.addEventListener("popstate", function (e) {
         },
         state: e.state
     });
-    updateN();
-    return;
 });
 
 let processing = false;
 function enqueue(item) {
     queue.push(item);
     if (!processing)
-        processQueue();
+        updateN(
+            processQueue()
+        );
 }
-function processQueue() {
+async function processQueue() {
     processing = true;
     for (let i = 1; queue.length > 0; ++i) {
         let item = queue.shift();
         switch (item.type) {
             case "push":
-                processPush(item);
+                await processPush(item);
                 break;
             case "pop":
-                processPop(item);
+                await processPop(item);
                 break;
         }
     }
@@ -140,19 +140,16 @@ function processQueue() {
 /**
  * @param { { state: any, url: string, handler: { routeKey: string, onenter: (state) => void, onpushEnter: (state) => void, onpopEnter: (state) => void, onexit: () => void, onpushExit: () => void, onpopExit: () => void } } }
  */
-function processPush({ state, url, handler }) {
+async function processPush({ state, url, handler }) {
     if (trailHead > -1) {
         let { handler } = trail[trailHead];
 
         if (handler) {
-            if (isDefined(handler.onexit))
-                handler.onexit();
-            else if (isDefined(handler.onpushExit))
-                handler.onpushExit();
+            await pushExit(handler);
         }
     } else if (foreignState !== null) {
         let handler = handlers[foreignState.routeKey];
-        pushExit(handler);
+        await pushExit(handler);
         foreignState = null;
     }
 
@@ -174,14 +171,11 @@ function processPush({ state, url, handler }) {
     router.search = location.search;
     router.hash = location.hash;
 
-    if (isDefined(handler.onenter))
-        handler.onenter(state, trailHead);
-    else if (isDefined(handler.onpushEnter))
-        handler.onpushEnter(state, trailHead);
+    await pushEnter(handler, state, trailHead);
 }
 
 /**@param {{anchor: number}} */
-function processPop({ location, state }) {
+async function processPop({ location, state }) {
     router.pathname = location.pathname;
     router.search = location.search;
     router.hash = location.hash;
@@ -199,26 +193,26 @@ function processPop({ location, state }) {
                 state.sessionId - foreignState.sessionId;
 
             if (direction > 0) {
-                pushExit(handler, foreignState.enterState);
+                await pushExit(handler, foreignState.enterState);
             }
             else if (direction < 0) {
-                popExit(handler);
+                await popExit(handler);
             }
             foreignState = null;
 
             let newHandler = handlers[state.routeKey];
             if (newHandler) {
                 if (direction > 0) {
-                    pushEnter(newHandler, state.enterState);
+                    await pushEnter(newHandler, state.enterState);
                 }
                 else if (direction < 0) {
-                    popEnter(newHandler, state.enterState);
+                    await popEnter(newHandler, state.enterState);
                 }
                 foreignState = state;
             }
         }
         else {
-            pushExit(handler);
+            await pushExit(handler);
             foreignState = null;
         }
     }
@@ -227,11 +221,11 @@ function processPop({ location, state }) {
         for (let i = trailHead; i < anchor; ++i) {
             if (i > -1) {
                 let { handler } = trail[i];
-                pushExit(handler);
+                await pushExit(handler);
             }
             if (i < trail.length - 1) {
                 let { handler, enterState } = trail[i + 1];
-                pushEnter(handler, enterState, i + 1);
+                await pushEnter(handler, enterState, i + 1);
             }
         }
     }
@@ -239,11 +233,11 @@ function processPop({ location, state }) {
         for (let i = trailHead; i > anchor; --i) {
             {
                 let { handler } = trail[i];
-                popExit(handler);
+                await popExit(handler);
             }
             if (i > 0) {
                 let { handler, enterState } = trail[i - 1];
-                popEnter(handler, enterState, i - 1);
+                await popEnter(handler, enterState, i - 1);
             }
         }
     }
@@ -254,65 +248,75 @@ function processPop({ location, state }) {
         let handler = handlers[state.routeKey];
         if (handler) {
             foreignState = state;
-            popEnter(handler, state.enterState, -1);
+            await popEnter(handler, state.enterState, -1);
         }
     }
 }
 
-function pushEnter(handler, enterState, anchor) {
+async function pushEnter(handler, enterState, anchor) {
     if (isDefined(handler.onenter))
-        handler.onenter(enterState, anchor);
-    else if (isDefined(handler.onpushEnter))
-        handler.onpushEnter(enterState, anchor);
+        await handler.onenter(enterState, anchor);
+    if (isDefined(handler.onpushEnter))
+        await handler.onpushEnter(enterState, anchor);
 }
-function popEnter(handler, enterState, anchor) {
+async function popEnter(handler, enterState, anchor) {
     if (isDefined(handler.onenter))
-        handler.onenter(enterState, anchor);
-    else if (isDefined(handler.onpopEnter))
-        handler.onpopEnter(enterState, anchor);
+        await handler.onenter(enterState, anchor);
+    if (isDefined(handler.onpopEnter))
+        await handler.onpopEnter(enterState, anchor);
 }
-function pushExit(handler) {
+async function pushExit(handler) {
     if (isDefined(handler.onexit))
-        handler.onexit();
-    else if (isDefined(handler.onpushExit))
-        handler.onpushExit();
+        await handler.onexit();
+    if (isDefined(handler.onpushExit))
+        await handler.onpushExit();
 }
-function popExit(handler) {
+async function popExit(handler) {
     if (isDefined(handler.onexit))
-        handler.onexit();
-    else if (isDefined(handler.onpopExit))
-        handler.onpopExit();
+        await handler.onexit();
+    if (isDefined(handler.onpopExit))
+        await handler.onpopExit();
 }
 
+let routeKeyIncrement = 0;
 export class NRoute {
     constructor(routeKey) {
         this.anchor = null;
-        this.routeKey = routeKey;
+        this.routeKey = routeKey || (++routeKeyIncrement).toString();
 
         if (this.routeKey)
             useRouteHandler(this);
     }
 
-    onpushEnter(state, anchor) {
-        this.handleEnter(state);
-        this.handlePopEnter(state);
-
-        this.anchor = anchor;
-    }
-    onpopEnter(state, anchor) {
-        this.handleEnter(state);
-        this.handlePopEnter(state);
+    async onreload(state, anchor) {
+        if (isDefined(anchor))
+            await this.handleEnter(state);
+        else
+            await this.handleReload();
 
         this.anchor = anchor;
     }
 
-    onpushExit() {
-        this.handleExit();
-        this.handlePushExit();
+    async onpushEnter(state, anchor) {
+        await this.handleEnter(state);
+        await this.handlePopEnter(state);
+
+        this.anchor = anchor;
     }
-    onpopExit() {
-        this.handleExit();
-        this.handlePopExit();
+    async onpopEnter(state, anchor) {
+        await this.handleEnter(state);
+        await this.handlePopEnter(state);
+
+        this.anchor = anchor;
+    }
+
+    async onpushExit() {
+        await this.handleExit();
+        await this.handlePushExit();
+    }
+    async onpopExit() {
+        await this.handleExit();
+        await this.handlePopExit();
     }
 
     pushState(state, url) {
@@ -322,10 +326,47 @@ export class NRoute {
         router.popState(this.anchor);
     }
 
-    handleEnter(state) { }
-    handlePushEnter(state) { }
-    handlePopEnter(state) { }
-    handleExit() { }
-    handlePushExit() { }
-    handlePopExit() { }
+    match() { return false; };
+
+    async handleEnter(state) { }
+    async handlePushEnter(state) { }
+    async handlePopEnter(state) { }
+    async handleExit() { }
+    async handlePushExit() { }
+    async handlePopExit() { }
+}
+
+export function reloadRoute() {
+    if (trailHead > -1) {
+        let handler = trail[trailHead];
+        return updateN(
+            pushEnter(handler.handler, handler.enterState, trailHead)
+        );
+    }
+
+    for (let k in handlers) {
+        let handler = handlers[k];
+        if (isDefined(handler.match)) {
+            let r = handler.match();
+            if (r) {
+                trail[trailHead = 0] = { handler, enterState: r };
+                return updateN(
+                    pushEnter(handler, r, trailHead)
+                );
+            }
+        }
+    }
+
+    let state = history.state;
+
+    if (state && state.routeKey) {
+        let handler = handlers[state.routeKey];
+        if (handler) {
+            trail[trailHead = 0] = { handler, enterState: state.enterState };
+            return updateN(
+                pushEnter(handler, state.enterState, trailHead)
+            );
+        }
+        return;
+    }
 }

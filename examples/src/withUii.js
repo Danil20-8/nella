@@ -1,5 +1,5 @@
 import { div, mount, switchComponent, inputText, button, list, poolList, useStore, poolSwitch, label, p, NTarget } from "../..";
-import { popState, router } from "../../router";
+import { popState, router, reloadRoute } from "../../router";
 import { popup } from "./withUii/popup";
 import { expirienceComponent } from "./withUii/expirienceComponent";
 import { resumeRoute } from "./withUii/routes/resumeRoute";
@@ -7,6 +7,7 @@ import { contentRoute } from "./withUii/routes/contentRoute";
 import { homeRoute } from "./withUii/routes/homeRoute";
 import { store } from "./withUii/store";
 import { Menu } from "./withUii/menu";
+import { itemPage } from "./withUii/pages/itemPage";
 
 // Experimental: popup on first history entry move back to confirm page exit
 /*pushState(null, null, {
@@ -42,7 +43,7 @@ new NTarget([
         tracking: () => console.log("queue length:", popup.store.queue.length.valueOf())
     }
 ]).track();
-
+reloadRoute();
 // Application entry point
 mount(document.body,
     // html body content
@@ -136,7 +137,8 @@ mount(document.body,
         poolSwitch(
             homeRoute,
             contentRoute,
-            resumeRoute
+            resumeRoute,
+            itemPage
         )
     )
 );

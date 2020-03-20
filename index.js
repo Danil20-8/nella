@@ -1,5 +1,6 @@
-import { Store, Target, Property } from "./shotcard";
-const store = new Store();
+import { Target, Property } from "./shotcard";
+import { store } from "./core";
+import { reloadRoute } from "./router";
 
 function getElement(component) {
     if (component) {
@@ -102,10 +103,10 @@ function insertBefore(el, child, refchild) {
         }
     }
 }
-export function val(value) {
+export function val(value, context) {
     let r = value ?
         (value instanceof Function ?
-            value() :
+            value.call(context) :
             value) :
         value;
     return r && r.valueOf();
@@ -501,7 +502,7 @@ export function mount(element, ...children) {
  */
 export function switchComponent(...items) {
     return list({
-        data: () => items.filter(i => val(i.active.valueOf())).slice(0, 1),
+        data: () => items.filter(i => val(i.active.valueOf(), i)).slice(0, 1),
         component: (i) => i.component()
     });
 }
@@ -511,7 +512,7 @@ export function switchComponent(...items) {
  */
 export function poolSwitch(...items) {
     return switchComponent(
-        ...items.map(i => { return { active: i.active, component: usePoolComponent(i.component.bind(i)) }; })
+        ...items.map(i => { return { active: () => val(i.active.valueOf(), i), component: usePoolComponent(i.component.bind(i)) }; })
     )
 }
 let __listComponentKeyIncrement = 0;
@@ -810,11 +811,15 @@ export class NTarget extends Target {
 export function useStore(data) {
     return new Property(store, data).__proxy;
 }
-export class NStore{
+export class NStore {
     constructor() {
         return useStore(this);
     }
 }
-export function updateN() {
+export async function updateN(...promises) {
+    for (let p of promises) {
+        if (p && p instanceof Promise)
+            await p;
+    }
     store.shot();
 }
