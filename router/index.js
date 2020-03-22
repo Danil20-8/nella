@@ -57,6 +57,9 @@ export function useRouteHandler(routeHandler) {
 export function dropRouteHandler(routeHandler) {
     delete handlers[routeHandler.routeKey];
 }
+/**@type {{ routeKey: string, enterState }[]} */
+let activeHandlersStack = [];
+
 let foreignState = null;
 /**
  * @type {{ handler, enterState }[]}
@@ -91,7 +94,7 @@ class NRouter {
         return;
     }
     popState(anchor) {
-        if (anchor !== undefined && anchor.valueOf() !== undefined)
+        if (anchor !== undefined && anchor !== null && anchor.valueOf() !== undefined && anchor.valueOf() !== null)
             history.go(anchor.valueOf() - trailHead - 1);
         else
             history.back();
@@ -162,7 +165,8 @@ async function processPush({ state, url, handler }) {
             sessionId,
             anchor: trailHead,
             enterState,
-            routeKey: handler.routeKey && handler.routeKey.valueOf()
+            routeKey: handler.routeKey && handler.routeKey.valueOf(),
+            activeHandlers: activeHandlersStack
         },
         "router",
         url);
@@ -184,7 +188,6 @@ async function processPop({ location, state }) {
 
     let anchor = !foreign && state && isDefined(state.anchor) ? state.anchor : -1;
     let direction = anchor - trailHead;
-
     if (foreignState !== null) {
         let handler = handlers[foreignState.routeKey];
         if (foreign) {
@@ -223,6 +226,7 @@ async function processPop({ location, state }) {
                 let { handler } = trail[i];
                 await pushExit(handler);
             }
+            trailHead = i + 1;
             if (i < trail.length - 1) {
                 let { handler, enterState } = trail[i + 1];
                 await pushEnter(handler, enterState, i + 1);
@@ -235,13 +239,13 @@ async function processPop({ location, state }) {
                 let { handler } = trail[i];
                 await popExit(handler);
             }
+            trailHead = i - 1;
             if (i > 0) {
                 let { handler, enterState } = trail[i - 1];
                 await popEnter(handler, enterState, i - 1);
             }
         }
     }
-
     trailHead = anchor;
 
     if (foreign && foreignState === null && state.routeKey) {
@@ -253,29 +257,72 @@ async function processPop({ location, state }) {
     }
 }
 
+function pushActiveHandler(routeKey, enterState) {
+    let index = activeHandlersStack.findIndex(h => h.routeKey === routeKey);
+    if (index > -1) {
+        activeHandlersStack.splice(index, 1);
+    }
+    activeHandlersStack.push({ routeKey, enterState });
+}
+function popActiveHandler(routeKey) {
+    let index = activeHandlersStack.findIndex(h => h.routeKey === routeKey);
+    if (index > -1) {
+        activeHandlersStack.splice(index, 1);
+    }
+}
+
 async function pushEnter(handler, enterState, anchor) {
-    if (isDefined(handler.onenter))
-        await handler.onenter(enterState, anchor);
-    if (isDefined(handler.onpushEnter))
-        await handler.onpushEnter(enterState, anchor);
+    let hasEnter = false;
+    let entered = false;
+
+    if (hasEnter |= isDefined(handler.onenter))
+        entered |= await handler.onenter(enterState, anchor);
+    if (hasEnter |= isDefined(handler.onpushEnter))
+        entered |= await handler.onpushEnter(enterState, anchor);
+
+    if (hasEnter && entered && handler.routeKey) {
+        pushActiveHandler(handler.routeKey, enterState);
+    }
+
 }
 async function popEnter(handler, enterState, anchor) {
-    if (isDefined(handler.onenter))
-        await handler.onenter(enterState, anchor);
-    if (isDefined(handler.onpopEnter))
-        await handler.onpopEnter(enterState, anchor);
+    let hasEnter = false;
+    let entered = false;
+
+    if (hasEnter |= isDefined(handler.onenter))
+        entered |= await handler.onenter(enterState, anchor);
+    if (hasEnter |= isDefined(handler.onpopEnter))
+        entered |= await handler.onpopEnter(enterState, anchor);
+
+    if (hasEnter && entered && handler.routeKey) {
+        pushActiveHandler(handler.routeKey, enterState);
+    }
 }
 async function pushExit(handler) {
-    if (isDefined(handler.onexit))
-        await handler.onexit();
-    if (isDefined(handler.onpushExit))
-        await handler.onpushExit();
+    let hasExit = false;
+    let exited = false;
+
+    if (hasExit |= isDefined(handler.onexit))
+        exited |= await handler.onexit();
+    if (hasExit |= isDefined(handler.onpushExit))
+        exited |= await handler.onpushExit();
+
+    if (hasExit && exited && handler.routeKey) {
+        popActiveHandler(handler.routeKey);
+    }
 }
 async function popExit(handler) {
-    if (isDefined(handler.onexit))
-        await handler.onexit();
-    if (isDefined(handler.onpopExit))
-        await handler.onpopExit();
+    let hasExit = false;
+    let exited = false;
+
+    if (hasExit |= isDefined(handler.onexit))
+        exited |= await handler.onexit();
+    if (hasExit |= isDefined(handler.onpopExit))
+        exited |= await handler.onpopExit();
+
+    if (hasExit && exited && handler.routeKey) {
+        popActiveHandler(handler.routeKey);
+    }
 }
 
 let routeKeyIncrement = 0;
@@ -284,39 +331,48 @@ export class NRoute {
         this.anchor = null;
         this.routeKey = routeKey || (++routeKeyIncrement).toString();
 
+        this.state = useStore({
+            within: false
+        });
+
         if (this.routeKey)
             useRouteHandler(this);
     }
-
-    async onreload(state, anchor) {
-        if (isDefined(anchor))
-            await this.handleEnter(state);
-        else
-            await this.handleReload();
-
-        this.anchor = anchor;
-    }
+    get within() { return this.state.within; }
+    set within(value) { this.state.within = value; }
 
     async onpushEnter(state, anchor) {
-        await this.handleEnter(state);
-        await this.handlePopEnter(state);
+        let r = false;
+        r |= await this.handleEnter(state) !== false;
+        r |= await this.handlePushEnter(state) !== false;
 
         this.anchor = anchor;
+
+        return this.within |= r;
     }
     async onpopEnter(state, anchor) {
-        await this.handleEnter(state);
-        await this.handlePopEnter(state);
+        let r = false;
+        r |= await this.handleEnter(state) !== false;
+        r |= await this.handlePopEnter(state) !== false;
 
         this.anchor = anchor;
+
+        return this.within |= (r || r === undefined);
     }
 
     async onpushExit() {
-        await this.handleExit();
-        await this.handlePushExit();
+        let r = false;
+        r |= await this.handleExit() !== false;
+        r |= await this.handlePushExit() !== false;
+
+        return !(this.within &= !r);
     }
     async onpopExit() {
-        await this.handleExit();
-        await this.handlePopExit();
+        let r = false;
+        r |= await this.handleExit() !== false;
+        r |= await this.handlePopExit() !== false;
+
+        return !(this.within &= !r);
     }
 
     pushState(state, url) {
@@ -328,20 +384,47 @@ export class NRoute {
 
     match() { return false; };
 
-    async handleEnter(state) { }
-    async handlePushEnter(state) { }
-    async handlePopEnter(state) { }
-    async handleExit() { }
-    async handlePushExit() { }
-    async handlePopExit() { }
+    async handleEnter(state) { return false; }
+    async handlePushEnter(state) { return false; }
+    async handlePopEnter(state) { return false }
+    async handleExit() { return false; }
+    async handlePushExit() { return false }
+    async handlePopExit() { return false; }
 }
 
-export function reloadRoute() {
+export async function reloadRoute() {
     if (trailHead > -1) {
         let handler = trail[trailHead];
-        return updateN(
+        await updateN(
             pushEnter(handler.handler, handler.enterState, trailHead)
         );
+
+        return;
+    }
+
+    let state = history.state;
+    if (state) {
+        for (let activeHandler of state.activeHandlers) {
+            let { routeKey, enterState } = activeHandler;
+            let handler = handlers[routeKey];
+            if (handler) {
+                activeHandlersStack.push(activeHandler);
+                trail[++trailHead] = { handler, enterState };
+                await updateN(
+                    pushEnter(handler, enterState, trailHead)
+                );
+            }
+        }
+        if (state.routeKey) {
+            let handler = handlers[state.routeKey];
+            if (handler) {
+                trail[++trailHead] = { handler, enterState: state.enterState };
+                await updateN(
+                    pushEnter(handler, state.enterState, trailHead)
+                );
+            }
+        }
+        return;
     }
 
     for (let k in handlers) {
@@ -350,23 +433,12 @@ export function reloadRoute() {
             let r = handler.match();
             if (r) {
                 trail[trailHead = 0] = { handler, enterState: r };
-                return updateN(
+                await updateN(
                     pushEnter(handler, r, trailHead)
                 );
+
+                return;
             }
         }
-    }
-
-    let state = history.state;
-
-    if (state && state.routeKey) {
-        let handler = handlers[state.routeKey];
-        if (handler) {
-            trail[trailHead = 0] = { handler, enterState: state.enterState };
-            return updateN(
-                pushEnter(handler, state.enterState, trailHead)
-            );
-        }
-        return;
     }
 }

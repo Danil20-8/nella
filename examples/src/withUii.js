@@ -1,5 +1,5 @@
 import { div, mount, switchComponent, inputText, button, list, poolList, useStore, poolSwitch, label, p, NTarget } from "../..";
-import { popState, router, reloadRoute } from "../../router";
+import { popState, router } from "../../router";
 import { popup } from "./withUii/popup";
 import { expirienceComponent } from "./withUii/expirienceComponent";
 import { resumeRoute } from "./withUii/routes/resumeRoute";
@@ -43,7 +43,7 @@ new NTarget([
         tracking: () => console.log("queue length:", popup.store.queue.length.valueOf())
     }
 ]).track();
-reloadRoute();
+
 // Application entry point
 mount(document.body,
     // html body content

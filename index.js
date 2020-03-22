@@ -483,6 +483,8 @@ export function iframe(context, ...children) {
 export function mount(element, ...children) {
     let c = new Component({}, element, children);
     c.__start();
+
+    reloadRoute();
     return c;
 }
 /**

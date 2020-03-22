@@ -31,7 +31,7 @@ class ItemPage {
         this.route = new ItemRoute(this);
         this.store = new ItemStore();
     }
-    active() { return this.route.match(); }
+    active() { return this.route.within; }
     component() {
         return [
             h1({ innerText: this.store.id })
