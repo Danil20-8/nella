@@ -1,6 +1,6 @@
 {
   "name": "nella",
-  "version": "0.9.3",
+  "version": "0.9.5",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

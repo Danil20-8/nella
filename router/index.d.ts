@@ -1,20 +1,14 @@
-export function pushState<TState>(state: TState, url: string, handler: { onenter: (state: TState) => void, onexit?: () => void });
-
-export function popState();
-
 export function restore(store, state);
-
-export function useFallbackBackHandler(handler: () => void);
 
 declare class NRouteHanadler<TState>{
     routeKey?: string;
 
-    onenter?(state: TState, anchor: any): void;
-    onpushEnter?(state: TState, anchor: any): void;
-    onpopEnter?(state: TState, anchor: any): void;
-    onexit?(): void;
-    onpushExit?(): void;
-    onpopExit?(): void;
+    onenter?(state: TState, anchor: any): any;
+    onpushEnter?(state: TState, anchor: any): any;
+    onpopEnter?(state: TState, anchor: any): any;
+    onexit?(): any;
+    onpushExit?(): any;
+    onpopExit?(): any;
 }
 declare class NRouter {
     pathname: string
@@ -29,7 +23,10 @@ export const router: NRouter;
 declare class NRoute<TState>{
     constructor(routeKey?: string);
 
-    routeKey?: string;
+    routeKey: string;
+    within: boolean;
+
+    match(): TState | false;
 
     onpushEnter(state: TState, anchor: any): any;
     onpopEnter(state: TState, anchor: any): any;
