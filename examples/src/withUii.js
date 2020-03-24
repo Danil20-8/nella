@@ -135,10 +135,10 @@ mount(document.body,
         // page router
         // caches inactive page components when they are loaded and deactivated
         poolSwitch(
+            itemPage,
             homeRoute,
             contentRoute,
             resumeRoute,
-            itemPage
         )
     )
 );

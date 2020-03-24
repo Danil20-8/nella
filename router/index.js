@@ -408,7 +408,7 @@ export async function reloadRoute() {
             let { routeKey, enterState } = activeHandler;
             let handler = handlers[routeKey];
             if (handler) {
-                activeHandlersStack.push(activeHandler);
+                pushActiveHandler(handler.routeKey, enterState);
                 trail[++trailHead] = { handler, enterState };
                 await updateN(
                     pushEnter(handler, enterState, trailHead)

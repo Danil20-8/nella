@@ -276,6 +276,8 @@ export class Component {
 
         remove(this.element);
     }
+
+    getElement() { return getElement((this)); }
 }
 function component(name, context, ...children) {
     return new Component(context, name, children);

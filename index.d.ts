@@ -19,6 +19,7 @@ export interface ComponentContextInterface {
     type?: string | (() => string)
     colspan?: number | (() => number)
     rowspan?: number | (() => number)
+    placeholder?: string | (() => string)
     onabort?: ((this: GlobalEventHandlers | (() => GlobalEventHandlers), ev: UIEvent) => any) | null;
     onanimationcancel?: ((this: GlobalEventHandlers | (() => GlobalEventHandlers), ev: AnimationEvent) => any) | null;
     onanimationend?: ((this: GlobalEventHandlers | (() => GlobalEventHandlers), ev: AnimationEvent) => any) | null;
