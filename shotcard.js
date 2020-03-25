@@ -414,13 +414,13 @@ const propertyProxyHandler = new PropertyProxyHandler();
 class TargetAction {
     /**
      * 
-     * @param {Target} target 
+     * @param {Store} store 
      * @param {(() => any) | Proxy} tracking 
      * @param {(any) => any} postaction 
      * @param {boolean} continuousTracking 
      */
-    constructor(target, tracking, postaction, continuousTracking) {
-        this.target = target;
+    constructor(store, tracking, postaction, continuousTracking) {
+        this.store = store;
         this.tracking = tracking;
         this.postaction = postaction;
         this.continuousTraking = continuousTracking;
@@ -445,12 +445,12 @@ class TargetAction {
         }
     }
     __track() {
-        this.target.store.__startTrack(this);
+        this.store.__startTrack(this);
         let r = this.tracking.valueOf() instanceof Function ?
             this.tracking() :
             this.tracking;
         r && r.valueOf();
-        this.target.store.__stopTrack(this);
+        this.store.__stopTrack(this);
         if (this.postaction)
             this.postaction(r);
         this.tracked = true;
@@ -473,13 +473,13 @@ export class Target {
         this.actions = actions.map(a => {
             return a instanceof Function ?
                 new TargetAction(
-                    this,
+                    store,
                     a,
                     null,
                     false
                 ) :
                 new TargetAction(
-                    this,
+                    store,
                     a.tracking,
                     a.postaction,
                     a.continuousTracking

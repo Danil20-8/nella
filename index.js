@@ -46,7 +46,7 @@ function getParent(component) {
 }
 function getNextSibling(component, skip) {
     if (component) {
-        if (!skip && component instanceof HTMLElement) {
+        if (!skip && component instanceof Node) {
             return component;
         }
         else {
@@ -77,7 +77,7 @@ function getNextSibling(component, skip) {
 }
 function append(el, ...children) {
     children.forEach(c => {
-        if (c instanceof HTMLElement) {
+        if (c instanceof Node) {
             getParent(el).append(c);
         }
         else {
@@ -91,7 +91,7 @@ function append(el, ...children) {
     });
 }
 function insertBefore(el, child, refchild) {
-    if (child instanceof HTMLElement) {
+    if (child instanceof Node) {
         getParent(el).insertBefore(child, getNextSibling(refchild));
     }
     else {
@@ -153,46 +153,25 @@ export class Component {
         this.context = context;
         this.awake(this.context);
 
-        this.children = children || this.component(context);
-        if (!Array.isArray(this.children)) {
-            this.children = [this.children];
-        }
-        for (let i = 0; i < this.children.length; ++i) {
-            let c = this.children[i];
-
-            if (Array.isArray(c)) {
-                this.children.splice(i, 1, ...c);
-                --i;
-            }
-            else if (c instanceof Function) {
-                c = c(context);
-                if (c)
-                    this.children[i] = new Component(context, null, c);
-                else {
-                    this.children.splice(i, 1);
-                    --i;
-                }
-            }
-            else if (!(c instanceof Component)) {
-                this.children.splice(i, 1);
-                --i;
-            }
-        }
+        this.children = flatComponentChildren(
+            children || this.component(context)
+        );
 
         if (html) {
             if (html instanceof HTMLElement) {
                 this.element = html;
                 append(this.element, ...this.children);
             }
-            else {
+            else if (html instanceof Node) {
+                this.element = html;
+            }
+            else if (typeof html === 'string') {
                 this.element = document.createElement(html);
                 append(this.element, ...this.children);
             }
 
             let actions = []
-            let contextKeys = Object.keys(this.context);
-            for (let i = 0; i < contextKeys.length; ++i) {
-                let k = contextKeys[i];
+            for (let k in this.context)
                 if (k.startsWith("on")) {
                     this.element[k] = this.context[k];
                 }
@@ -208,7 +187,7 @@ export class Component {
                         }
                     }
                 }
-            }
+
 
             this.__store = new Target(store, actions);
 
@@ -259,14 +238,14 @@ export class Component {
         this.stop();
         this.__started = false;
 
-        if (this.element instanceof HTMLElement) {
+        if (this.element instanceof Node) {
             this.__store.untrack();
         }
     }
     stop() {
     }
     __applyHtmlContext() {
-        if (this.element instanceof HTMLElement) {
+        if (this.element instanceof Node) {
             this.__store.track();
         }
     }
@@ -279,6 +258,53 @@ export class Component {
 
     getElement() { return getElement((this)); }
 }
+
+function flatComponentChildren(children) {
+    if (!Array.isArray(children))
+        children = [children];
+
+    for (let i = 0; i < children.length; ++i) {
+        let c = children[i];
+
+        if (c instanceof Component) {
+            continue;
+        }
+        else if (Array.isArray(c)) {
+            let flatten = flatComponentChildren(c);
+            children.splice(i, 1, ...flatten);
+            i += flatten.length - 1;
+        }
+        else if (c && c.valueOf() instanceof Function) {
+            let r = c();
+
+            if (r instanceof Component) {
+                children[i] = r;
+            }
+            else if (Array.isArray(r)) {
+                let flatten = flatComponentChildren(r);
+                children.splice(i, 1, ...flatten);
+                i += flatten.length - 1;
+            }
+            else if (r !== undefined) {
+                children[i] = new Component({ data: c }, document.createTextNode(""));
+            }
+            else {
+                this.children.splice(i, 1);
+                --i;
+            }
+        }
+        else if (c !== undefined) {
+            children[i] = new Component({ data: c }, document.createTextNode(""));
+        }
+        else {
+            this.children.splice(i, 1);
+            --i;
+        }
+    }
+
+    return children;
+}
+
 function component(name, context, ...children) {
     return new Component(context, name, children);
 }
@@ -827,3 +853,5 @@ export async function updateN(...promises) {
     }
     store.shot();
 }
+
+export { createElement } from "./jsx";
