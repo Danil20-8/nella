@@ -1,7 +1,6 @@
 import * as ll from "./";
 
 export function createElement(tag, attributes, ...children) {
-    console.log(children);
     attributes = attributes || {};
     let component = ll[tag];
     if (component) {
@@ -17,8 +16,12 @@ export function createElement(tag, attributes, ...children) {
         return component(attributes, ...children);
     }
     else if (tag instanceof Function) {
-        return tag(attributes, ...children);
+        return new tag(attributes, ...children);
     }
+    
+    return new ll.Component(attributes, tag, children);
+}
 
-    throw new Error(`not implemented! ${tag}`);
+export function Fragment(...children) {
+    return children;
 }

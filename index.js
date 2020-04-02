@@ -369,11 +369,15 @@ export function img(context) {
 }
 export function form(context, ...children) {
     setHooks(context);
-    return component("form", ...children);
+    return component("form", context, ...children);
 }
 export function input(context, type) {
+    if (!("type" in context)) {
+        context.type = type;
+    }
+
     setHooks(context);
-    return component("input", Object.assign(context, { type: type }));
+    return component("input", context);
 }
 export function inputText(context) {
     return input(context, "text");
@@ -854,4 +858,4 @@ export async function updateN(...promises) {
     store.shot();
 }
 
-export { createElement } from "./jsx";
+export { createElement, Fragment } from "./jsx";

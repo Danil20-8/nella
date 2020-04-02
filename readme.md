@@ -4,10 +4,12 @@ is a framework for building UI for web applications
 
 ## is
 
-- ### [Declarative UI components](#Components)
-- ### [Reactive store](#Store)
-- ### [State machine router](#Router)
+- ## [Declarative UI components](#Components)
+- ## [Reactive store](#Store)
+- ## [State machine router](#Router)
 
+since version 0.10.1 nella supports JSX components declaration
+- [Nella's JSX guid](./docs/jsx.md)
 ---
 
 ## Get ready

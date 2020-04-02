@@ -284,6 +284,8 @@ export interface ComponentContextInterface {
 }
 
 type ComponentChildrenType =
+    any |
+    string |
     Component<any> |
     (() => ComponentChildrenType) |
     (ComponentChildrenType | (() => ComponentChildrenType))[];
@@ -295,6 +297,7 @@ export class Component<TContext>{
     start(): void;
     stop(): void;
     component(context: any): ComponentChildrenType;
+    getElement(): HTMLElement | Node | null;
 }
 export function div(context: ComponentContextInterface, ...children: ComponentChildrenType[]): Component<ComponentContextInterface>;
 
@@ -347,3 +350,6 @@ export class NTarget {
 
 export function val<T>(value: T | (() => T)): T;
 export function isDefined(value: any): boolean;
+
+export { createElement } from "./jsx";
+export { JSX } from "./jsx";
