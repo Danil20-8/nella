@@ -1,4 +1,4 @@
-import { mount, div, Component, inputText, useStore } from "../../";
+import { mount, div, Component, inputText, useStore } from "../../../";
 class AppComponent extends Component<{ name: string }>{
     component({ name }) {
         return [

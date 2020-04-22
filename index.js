@@ -453,9 +453,9 @@ export function p(context, ...children) {
     setHooks(context);
     return component("p", context, ...children);
 }
-export function button(context) {
+export function button(context, ...children) {
     setHooks(context);
-    return component("button", context);
+    return component("button", context, ...children);
 }
 export function select(context) {
     setHooks(context);

@@ -908,5 +908,10 @@ declare namespace JSX {
         tspan: Nella.SVGProps
         use: Nella.SVGProps
         view: Nella.SVGProps
+
+        switchComponent: {}
+        poolSwitch: {}
+        list: { data, component?: (data) => any }
+        poolList: { data, component?: (data) => any }
     }
 }
