@@ -9,7 +9,7 @@ is a framework for building UI for web applications
 - ## [State machine router](#Router)
 
 since version 0.10.1 nella supports JSX components declaration
-- [Nella's JSX guid](./docs/jsx.md)
+- [Nella's JSX guide](./docs/jsx.md)
 ---
 
 ## Get ready
