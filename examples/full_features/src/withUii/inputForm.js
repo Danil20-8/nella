@@ -1,4 +1,4 @@
-import { useStore, list, div, button, inputText, switchComponent, Component, NTarget } from "../../..";
+import { useStore, list, div, button, inputText, switchComponent, Component, NTarget } from "../../../..";
 
 class InputForm extends Component {
     awake({ inputs }) {

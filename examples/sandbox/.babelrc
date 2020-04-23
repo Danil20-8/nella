@@ -1,0 +1,9 @@
+{
+    "plugins": [
+      ["@babel/plugin-transform-react-jsx", { 
+        "pragma": "Nella.createElement",
+        "pragmaFrag": "Nella.Fragment"
+      }]
+    ],
+    "comments": false
+}

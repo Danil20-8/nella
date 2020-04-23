@@ -1,5 +1,5 @@
-import { NStore, h1 } from "../../../..";
-import { NRoute, router } from "../../../../router";
+import { NStore, h1 } from "../../../../..";
+import { NRoute, router } from "../../../../../router";
 import Route from "route-parser";
 
 class ItemStore extends NStore {

@@ -3,10 +3,10 @@ const webpack = require('webpack');
 var HtmlWebpackPlugin = require('html-webpack-plugin');
 module.exports = {
     entry: {
-        index: "./index.tsx"
+        index: "./src/index.tsx"
     },
     output: {
-        filename: "[name].[hash].js",
+        filename: "[name].js",
         path: path.resolve(__dirname, '../dist'),
     },
     devtool: false,
@@ -21,12 +21,12 @@ module.exports = {
                 use: ['style-loader', 'css-loader'],
             },
             {
-                test: /\.tsx?$/,
+                test: /\.tsx?$/i,
                 use: ['babel-loader', 'ts-loader'],
                 exclude: /node_modules/,
             },
             {
-                test: /\.jsx?$/,
+                test: /\.jsx?$/i,
                 use: ['babel-loader'],
                 exclude: /node_modules/,
             },

@@ -1,6 +1,6 @@
-import { router } from "../../../../router";
+import { router } from "../../../../../router";
 import { homeRoute } from "./homeRoute";
-import { div, button, useStore } from "../../../..";
+import { div, button, useStore } from "../../../../..";
 
 class ContentRoute {
     active() { return router.pathname.startsWith("/content"); }

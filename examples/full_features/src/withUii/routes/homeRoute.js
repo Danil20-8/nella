@@ -1,7 +1,7 @@
-import { router } from '../../../../router';
+import { router } from '../../../../../router';
 import { contentRoute } from './contentRoute';
 import { resumeRoute } from './resumeRoute';
-import { div, button, useStore } from '../../../..';
+import { div, button, useStore } from '../../../../..';
 
 class HomeRoute {
     active() {

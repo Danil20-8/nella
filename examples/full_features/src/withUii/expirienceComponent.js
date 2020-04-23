@@ -1,4 +1,4 @@
-import { label, Component, useStore, button, poolList, div, poolSwitch, list } from "../../..";
+import { label, Component, useStore, button, poolList, div, poolSwitch, list } from "../../../..";
 import { inputForm } from "./inputForm";
 
 class ExpirienceComponent extends Component {

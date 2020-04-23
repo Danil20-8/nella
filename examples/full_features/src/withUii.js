@@ -1,5 +1,5 @@
-import { div, mount, switchComponent, inputText, button, list, poolList, useStore, poolSwitch, label, p, NTarget } from "../..";
-import { popState, router } from "../../router";
+import { div, mount, switchComponent, inputText, button, list, poolList, useStore, poolSwitch, label, p, NTarget } from "../../..";
+import { popState, router } from "../../../router";
 import { popup } from "./withUii/popup";
 import { expirienceComponent } from "./withUii/expirienceComponent";
 import { resumeRoute } from "./withUii/routes/resumeRoute";

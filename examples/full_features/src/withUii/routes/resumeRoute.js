@@ -1,6 +1,6 @@
-import { router } from "../../../../router";
+import { router } from "../../../../../router";
 import { expirienceComponent } from "../expirienceComponent";
-import { poolList, div, label, inputText, useStore, button } from "../../../..";
+import { poolList, div, label, inputText, useStore, button } from "../../../../..";
 import { store } from "../store";
 
 class ResumeRoute {

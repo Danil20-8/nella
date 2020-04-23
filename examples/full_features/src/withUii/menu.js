@@ -1,5 +1,5 @@
-import { poolSwitch, div, span, useStore, list, button} from "../../..";
-import { NRoute } from "../../../router";
+import { poolSwitch, div, span, useStore, list, button} from "../../../..";
+import { NRoute } from "../../../../router";
 
 class MenuRoute extends NRoute {
     constructor(menu, key) {

@@ -1,5 +1,5 @@
-import { poolSwitch, poolList, div, button, isDefined, NStore } from "../../..";
-import { NRoute } from "../../../router";
+import { poolSwitch, poolList, div, button, isDefined, NStore } from "../../../..";
+import { NRoute } from "../../../../router";
 
 class PopupStore extends NStore {
     constructor() {

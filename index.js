@@ -612,7 +612,7 @@ class ListComponent extends Component {
             let element = this.dict[key];
 
             if (!element) {
-                element = new Component({}, null, this.context.component(nd));
+                element = new Component({}, null, this.context.component(nd, i));
                 element.__parent = this;
                 newElements.push(element);
 
@@ -639,7 +639,7 @@ class ListComponent extends Component {
                 if (!doObj) {
                     let it = inserted[key];
                     if (it && it.length >= element.length) {
-                        let el = new Component({}, null, this.context.component(nd));
+                        let el = new Component({}, null, this.context.component(nd, i));
                         element.__parent = this;
                         newElements.push(el);
 

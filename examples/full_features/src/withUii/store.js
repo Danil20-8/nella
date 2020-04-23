@@ -1,4 +1,4 @@
-import { useStore } from "../../..";
+import { useStore } from "../../../..";
 
 export const store = useStore({
     name: "rename me",

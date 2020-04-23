@@ -175,7 +175,7 @@ async function processPush({ state, url, handler }) {
     router.search = location.search;
     router.hash = location.hash;
 
-    await pushEnter(handler, state, trailHead);
+    await pushEnter(handler, enterState, trailHead);
 }
 
 /**@param {{anchor: number}} */
