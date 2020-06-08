@@ -1,12 +1,12 @@
 import { updateN, useStore, isDefined } from "../";
 
-function cloneState(source) {
+export function cloneState(source) {
     if (source === null)
         return source;
 
     let s = source.valueOf();
     if (Array.isArray(s)) {
-        return [...s];
+        return s.map(v => cloneState(v));
     }
     else if (s instanceof Object) {
         let target = {};
@@ -379,7 +379,7 @@ export class NRoute {
         router.pushState(state, url, this);
     }
     popState() {
-        router.popState(this.anchor);
+        return router.popState(this.anchor);
     }
 
     match() { return false; };

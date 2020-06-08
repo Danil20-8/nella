@@ -242,6 +242,8 @@ class PropertySource {
                     if (track.length > 0) {
                         property.__addTarget(track[track.length - 1]);
                     }
+                    
+                    property.assertUndefined();
 
                     let v = property.__propName === undefined ?
                         property.__sourceContainer.source :
@@ -277,7 +279,24 @@ export class Property {
 
         this.__proxy = new PropertySource(this);
     }
-
+    assertUndefined() {
+        if (this.__sourceContainer.source === undefined ||
+            this.__sourceContainer.source === null)
+            throw new Error(`Source ${this.__sourceProperty.flatToString()} of property "${this.__propName}" is undefined. Full path is ${this.flatToString()}`);
+    }
+    flatToString() {
+        let r = this.flat();
+        return this.flat().reverse().map(p => p.__propName || "{root}").join(".");
+    }
+    flat() { 
+        let r = [];
+        let p = this;
+        while (p) {
+            r.push(p);
+            p = p.__sourceProperty;
+        }
+        return r;
+    }
     /**@param {TargetAction} targetAction*/
     __addTarget(targetAction) {
         if (this.__targets.indexOf(targetAction) < 0) {

@@ -1,4 +1,5 @@
 export function restore(store, state);
+export function cloneState<T>(source: T) : T;
 
 declare class NRouteHanadler<TState>{
     routeKey?: string;

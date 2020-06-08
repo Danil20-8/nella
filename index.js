@@ -289,7 +289,7 @@ function flatComponentChildren(children) {
                 children[i] = new Component({ data: c }, document.createTextNode(""));
             }
             else {
-                this.children.splice(i, 1);
+                children.splice(i, 1);
                 --i;
             }
         }
@@ -297,7 +297,7 @@ function flatComponentChildren(children) {
             children[i] = new Component({ data: c }, document.createTextNode(""));
         }
         else {
-            this.children.splice(i, 1);
+            children.splice(i, 1);
             --i;
         }
     }
